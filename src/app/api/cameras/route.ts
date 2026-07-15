@@ -15,6 +15,7 @@ import type { ExploreCamera, CameraCategory } from "@/lib/types";
 import { ExploreCameraSchema } from "@/lib/types";
 import { withErrorHandler } from "@/lib/api-utils";
 import exploreChannels from "@/data/explore-channels.json";
+import seedCamerasJson from "@/data/seed-cameras.json";
 
 // ─── Known Locations Dictionary ─────────────────────────────────────────────
 // Maps keywords in YouTube titles to GPS coordinates and categories.
@@ -247,65 +248,13 @@ const DEFAULT_META: LocationMeta = {
 };
 
 // ─── Curated seed data (Fallback) ─────────────────────────────────────────────
-
-const SEED_CAMERAS: ExploreCamera[] = [
-  {
-    id: "cam-katmai-brooks-falls",
-    name: "Katmai Brown Bear Cam",
-    location: "Katmai National Park, Alaska",
-    country: "United States",
-    coordinates: [-155.0547, 58.4596] as [number, number],
-    youtubeVideoId: "J7ZrIDvqlic",
-    embedUrl:
-      "https://www.youtube.com/embed/J7ZrIDvqlic?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/J7ZrIDvqlic/maxresdefault.jpg",
-    isLive: true,
-    category: "bears" as CameraCategory,
-    description: "Watch brown bears catching sockeye salmon at Brooks Falls.",
-  },
-  {
-    id: "cam-decorah-eagles",
-    name: "Decorah Eagles Nest Cam",
-    location: "Decorah, Iowa",
-    country: "United States",
-    coordinates: [-91.7854, 43.3017] as [number, number],
-    youtubeVideoId: "GGIE1E-kaMQ",
-    embedUrl:
-      "https://www.youtube.com/embed/GGIE1E-kaMQ?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/GGIE1E-kaMQ/maxresdefault.jpg",
-    isLive: true,
-    category: "birds" as CameraCategory,
-    description: "Bald eagle nest cam in Decorah, Iowa.",
-  },
-  {
-    id: "cam-manatee-underwater",
-    name: "Underwater Manatee Cam",
-    location: "Homosassa Springs, Florida",
-    country: "United States",
-    coordinates: [-82.5765, 28.8] as [number, number],
-    youtubeVideoId: "Fz6sl9YJZE0",
-    embedUrl:
-      "https://www.youtube.com/embed/Fz6sl9YJZE0?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/Fz6sl9YJZE0/maxresdefault.jpg",
-    isLive: true,
-    category: "marine" as CameraCategory,
-    description: "Watch the beloved sea cows swimming underwater in Florida.",
-  },
-  {
-    id: "cam-tropical-reef",
-    name: "Tropical Reef Camera",
-    location: "Aquarium of the Pacific, CA",
-    country: "United States",
-    coordinates: [-118.1937, 33.7621] as [number, number],
-    youtubeVideoId: "DHUnz4dyb54",
-    embedUrl:
-      "https://www.youtube.com/embed/DHUnz4dyb54?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/DHUnz4dyb54/maxresdefault.jpg",
-    isLive: true,
-    category: "marine" as CameraCategory,
-    description: "Beautiful tropical reef habitat featuring colorful fish.",
-  },
-].filter((c) => ExploreCameraSchema.safeParse(c).success);
+// Loaded from src/data/seed-cameras.json which is periodically refreshed
+// by running `node scripts/refresh-seed-cameras.js`.
+// This ensures that quota exhaustion always falls back to a full 50-camera set
+// rather than just 4 hand-curated placeholders.
+const SEED_CAMERAS: ExploreCamera[] = (seedCamerasJson as ExploreCamera[]).filter(
+  (c) => ExploreCameraSchema.safeParse(c).success,
+);
 
 // ─── Fetch + merge logic ─────────────────────────────────────────────────────
 
