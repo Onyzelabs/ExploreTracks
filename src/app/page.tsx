@@ -64,7 +64,7 @@ export default function Home() {
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
   const [openVideos, setOpenVideos] = useState<OpenVideoPanel[]>([]);
   const [mapStyle, setMapStyle] = useState<string>(
-    "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json",
+    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   );
 
   const { cameras, isLoading: camLoading, error: camError } = useCameras();
@@ -210,14 +210,14 @@ export default function Home() {
             className="text-sm px-3 py-1.5 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none focus:border-orange-500"
             style={{ fontFamily: "var(--font-sans)" }}
           >
-            <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json">
+            <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">
               Dark Map
             </option>
             <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">
               Light Map
             </option>
-            <option value="https://tiles.stadiamaps.com/styles/outdoors.json">
-              Outdoors
+            <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">
+              Light Map
             </option>
             <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">
               Positron
@@ -310,13 +310,7 @@ export default function Home() {
           className="text-xs text-neutral-500 font-medium drop-shadow-md"
           style={{ fontFamily: "var(--font-sans)" }}
         >
-          Map © OpenStreetMap · Stadia Maps
-        </span>
-        <span
-          className="text-xs text-neutral-500 font-medium drop-shadow-md"
-          style={{ fontFamily: "var(--font-sans)" }}
-        >
-          Animal data © Movebank · Cams © explore.org
+          Map © OpenStreetMap & CartoDB | Telemetry © Movebank | Live Streams © Explore.org
         </span>
       </footer>
     </div>
