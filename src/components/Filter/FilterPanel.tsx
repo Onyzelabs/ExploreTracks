@@ -76,7 +76,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-sans)" }}>
-              Filters
+              Data Sources
             </span>
             {activeCount > 0 && (
               <button
@@ -113,8 +113,8 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Camera categories */}
-          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-sans)" }}>
-            📷 Live Cameras
+          <p className="text-[10px] text-orange-400 uppercase tracking-wider mb-2 font-semibold" style={{ fontFamily: "var(--font-sans)" }}>
+            Explore.org Live Cameras (Video)
           </p>
           <div className="flex flex-wrap gap-1.5 mb-4">
             {(Object.entries(CATEGORY_META) as [CameraCategory, typeof CATEGORY_META[CameraCategory]][]).map(
@@ -141,8 +141,8 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Animal track types */}
-          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-sans)" }}>
-            🐾 Animal Tracks
+          <p className="text-[10px] text-cyan-400 uppercase tracking-wider mb-2 font-semibold mt-4" style={{ fontFamily: "var(--font-sans)" }}>
+            Movebank Tracks (Telemetry, No Video)
           </p>
           <div className="flex flex-wrap gap-1.5">
             {(Object.entries(ANIMAL_TYPE_META) as [AnimalType, typeof ANIMAL_TYPE_META[AnimalType]][]).map(
