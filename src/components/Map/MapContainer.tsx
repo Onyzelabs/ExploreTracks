@@ -31,7 +31,6 @@ function buildCameraMarker(camera: ExploreCamera, isOpen: boolean): HTMLElement 
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
   `;
 
   el.innerHTML = `
@@ -70,7 +69,6 @@ function buildAnimalMarker(track: AnimalTrack): HTMLElement {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
   `;
 
   el.innerHTML = `
