@@ -81,16 +81,6 @@ function buildAnimalMarker(track: AnimalTrack): HTMLElement {
       box-shadow: 0 0 14px ${track.color}55, 0 0 28px ${track.color}22;
       transition: border-color 0.2s ease;
     ">${meta.emoji}</div>
-    <div style="
-      position: absolute;
-      inset: -6px;
-      border-radius: 50%;
-      border: 1.5px solid ${track.color};
-      opacity: 0.25;
-      pointer-events: none;
-      animation: et-ping 2.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-      animation-delay: ${(Math.random() * 1.5).toFixed(2)}s;
-    "></div>
   `;
 
   return el;
