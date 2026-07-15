@@ -19,7 +19,7 @@
   --glass-blur:   18px;
 
   /* Typography */
-  --font-sans: var(--font-sans), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: var(--font-sans), "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

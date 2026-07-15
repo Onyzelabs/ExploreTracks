@@ -44,7 +44,6 @@ function buildCameraMarker(camera: ExploreCamera, isOpen: boolean): HTMLElement 
       box-shadow: 0 0 ${isOpen ? 20 : 10}px ${meta.color}${isOpen ? "88" : "44"},
                   0 0 ${isOpen ? 40 : 20}px ${meta.color}${isOpen ? "33" : "11"};
       transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      /* No will-change or transform — avoid interfering with MapLibre positioning */
     ">${meta.emoji}</div>
     <div style="
       position: absolute;
@@ -167,8 +166,6 @@ export default function MapContainer({
   }, []);
 
   // ── Track lines: add new ones, toggle visibility for existing ──────────────
-  // We use setLayoutProperty('visibility') instead of removing/re-adding layers.
-  // This is the key fix for the "markers move on zoom" issue.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isLoaded) return;
