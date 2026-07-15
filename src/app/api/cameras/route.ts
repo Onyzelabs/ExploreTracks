@@ -99,6 +99,13 @@ const LOCATION_DICTIONARY: LocationMeta[] = [
     category: "birds",
   },
   {
+    keywords: ["panda", "gengda", "shenshuping", "wolong"],
+    location: "Gengda Valley, Sichuan",
+    country: "China",
+    coordinates: [103.045, 30.957],
+    category: "bears",
+  },
+  {
     keywords: [
       "africa",
       "watering hole",
