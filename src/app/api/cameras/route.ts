@@ -2,17 +2,6 @@
  * GET /api/cameras
  *
  * Returns explore.org live camera data.
- *
- * Strategy (explore.org has no public API and uses client-side JS rendering):
- *  1. Attempt to scrape explore.org/livecams for any statically embedded data.
- *  2. If scraping yields no results (common — their site is React-rendered),
- *     fall back to a curated seed dataset that is maintained in this file.
- *
- * The seed dataset should be periodically reviewed and updated when new
- * cameras go live or old ones go offline. In production, consider replacing
- * this with a CMS-backed dataset (e.g. Contentful, Sanity) or an Admin UI.
- *
- * Cache: 1 hour via Next.js unstable_cache.
  */
 
 import { unstable_cache } from "next/cache";
@@ -21,15 +10,12 @@ import { ExploreCameraSchema } from "@/lib/types";
 import { withErrorHandler } from "@/lib/api-utils";
 
 // ─── Curated seed data ────────────────────────────────────────────────────────
-// These are known, long-running explore.org cameras with verified YouTube IDs.
-// Embedding may occasionally fail if the broadcaster disables it — the UI
-// shows a fallback "Watch on YouTube" link in that case.
 
 const SEED_CAMERAS: ExploreCamera[] = [
   {
     id: "cam-katmai-brooks-falls",
     name: "Katmai Brown Bear Cam",
-    location: "Brooks Falls, Katmai National Park",
+    location: "Katmai National Park, Alaska",
     country: "United States",
     coordinates: [-155.0547, 58.4596],
     youtubeVideoId: "J7ZrIDvqlic",
@@ -37,8 +23,7 @@ const SEED_CAMERAS: ExploreCamera[] = [
     thumbnail: "https://img.youtube.com/vi/J7ZrIDvqlic/maxresdefault.jpg",
     isLive: true,
     category: "bears",
-    description:
-      "Watch brown bears catching sockeye salmon at Brooks Falls — one of the greatest wildlife spectacles on Earth.",
+    description: "Watch brown bears catching sockeye salmon at Brooks Falls.",
   },
   {
     id: "cam-decorah-eagles",
@@ -46,97 +31,90 @@ const SEED_CAMERAS: ExploreCamera[] = [
     location: "Decorah, Iowa",
     country: "United States",
     coordinates: [-91.7854, 43.3017],
-    youtubeVideoId: "wkVLYfU-Kew",
-    embedUrl: "https://www.youtube.com/embed/wkVLYfU-Kew?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/wkVLYfU-Kew/maxresdefault.jpg",
+    youtubeVideoId: "GGIE1E-kaMQ",
+    embedUrl: "https://www.youtube.com/embed/GGIE1E-kaMQ?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
+    thumbnail: "https://img.youtube.com/vi/GGIE1E-kaMQ/maxresdefault.jpg",
     isLive: true,
     category: "birds",
-    description:
-      "Bald eagle nest cam in Decorah, Iowa — watch the iconic North B eagles raise their eaglets through the seasons.",
+    description: "Bald eagle nest cam in Decorah, Iowa.",
   },
   {
-    id: "cam-african-watering-hole",
-    name: "African Watering Hole",
-    location: "Tembe Elephant Park",
-    country: "South Africa",
-    coordinates: [32.4657, -27.0167],
+    id: "cam-manatee-underwater",
+    name: "Underwater Manatee Cam",
+    location: "Homosassa Springs, Florida",
+    country: "United States",
+    coordinates: [-82.5765, 28.8000],
+    youtubeVideoId: "Fz6sl9YJZE0",
+    embedUrl: "https://www.youtube.com/embed/Fz6sl9YJZE0?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
+    thumbnail: "https://img.youtube.com/vi/Fz6sl9YJZE0/maxresdefault.jpg",
+    isLive: true,
+    category: "marine",
+    description: "Watch the beloved sea cows swimming underwater in Florida.",
+  },
+  {
+    id: "cam-tropical-reef",
+    name: "Tropical Reef Camera",
+    location: "Aquarium of the Pacific, CA",
+    country: "United States",
+    coordinates: [-118.1937, 33.7621],
     youtubeVideoId: "DHUnz4dyb54",
     embedUrl: "https://www.youtube.com/embed/DHUnz4dyb54?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/DHUnz4dyb54/maxresdefault.jpg",
     isLive: true,
-    category: "african",
-    description:
-      "24/7 live feed from a watering hole in the African wilderness. Elephants, lions, leopards and more visit around the clock.",
+    category: "marine",
+    description: "Beautiful tropical reef habitat featuring colorful fish.",
   },
   {
-    id: "cam-polar-bear-churchill",
-    name: "Polar Bear Cam",
-    location: "Churchill, Manitoba",
-    country: "Canada",
-    coordinates: [-94.1656, 58.7684],
-    youtubeVideoId: "F0GOOP82094",
-    embedUrl: "https://www.youtube.com/embed/F0GOOP82094?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/F0GOOP82094/maxresdefault.jpg",
+    id: "cam-puffin-ledge",
+    name: "Puffin Loafing Ledge",
+    location: "Seal Island, Maine",
+    country: "United States",
+    coordinates: [-68.7411, 43.8906],
+    youtubeVideoId: "daFe_ygulPY",
+    embedUrl: "https://www.youtube.com/embed/daFe_ygulPY?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
+    thumbnail: "https://img.youtube.com/vi/daFe_ygulPY/maxresdefault.jpg",
+    isLive: true,
+    category: "birds",
+    description: "Atlantic puffins resting on the rocky ledges of Seal Island.",
+  },
+  {
+    id: "cam-international-wolf",
+    name: "International Wolf Center",
+    location: "Ely, Minnesota",
+    country: "United States",
+    coordinates: [-91.8671, 47.9032],
+    youtubeVideoId: "5e4lsEe4Vew",
+    embedUrl: "https://www.youtube.com/embed/5e4lsEe4Vew?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
+    thumbnail: "https://img.youtube.com/vi/5e4lsEe4Vew/maxresdefault.jpg",
+    isLive: true,
+    category: "african",
+    description: "Watch the ambassador wolves at the International Wolf Center.",
+  },
+  {
+    id: "cam-anan-bear",
+    name: "Anan Bear Cam",
+    location: "Wrangell, Alaska",
+    country: "United States",
+    coordinates: [-131.8596, 56.1772],
+    youtubeVideoId: "ypMu3yA7h3s",
+    embedUrl: "https://www.youtube.com/embed/ypMu3yA7h3s?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
+    thumbnail: "https://img.youtube.com/vi/ypMu3yA7h3s/maxresdefault.jpg",
     isLive: true,
     category: "bears",
-    description:
-      "Churchill, Manitoba — the polar bear capital of the world. Watch bears gathering near the Hudson Bay each autumn.",
+    description: "Black and brown bears fishing at the Anan Creek observatory.",
   },
   {
-    id: "cam-monterey-jellyfish",
-    name: "Monterey Bay Jelly Cam",
-    location: "Monterey Bay Aquarium",
+    id: "cam-kitten-rescue",
+    name: "Kitten Rescue Cam",
+    location: "Los Angeles, California",
     country: "United States",
-    coordinates: [-121.9019, 36.6184],
-    youtubeVideoId: "z7_GhJeFxQI",
-    embedUrl: "https://www.youtube.com/embed/z7_GhJeFxQI?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/z7_GhJeFxQI/maxresdefault.jpg",
-    isLive: true,
-    category: "marine",
-    description:
-      "Mesmerizing jellyfish drifting through the Monterey Bay Aquarium's Open Sea exhibit. Relaxing and beautiful.",
-  },
-  {
-    id: "cam-namibia-cheetah",
-    name: "Namibia Cheetah Cam",
-    location: "Okonjima Nature Reserve",
-    country: "Namibia",
-    coordinates: [17.0203, -20.6161],
+    coordinates: [-118.2437, 34.0522],
     youtubeVideoId: "-m_nQT62B4Y",
     embedUrl: "https://www.youtube.com/embed/-m_nQT62B4Y?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/-m_nQT62B4Y/maxresdefault.jpg",
     isLive: true,
     category: "african",
-    description:
-      "Rescued cheetahs at the AfriCat Foundation in Namibia roam safely under expert care.",
-  },
-  {
-    id: "cam-hummingbird-garden",
-    name: "Hummingbird Garden Cam",
-    location: "Sonoma County, California",
-    country: "United States",
-    coordinates: [-122.8, 38.5],
-    youtubeVideoId: "EwTH5yY7Mks",
-    embedUrl: "https://www.youtube.com/embed/EwTH5yY7Mks?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/EwTH5yY7Mks/maxresdefault.jpg",
-    isLive: true,
-    category: "birds",
-    description:
-      "A tranquil California garden feeder visited by Anna's and Rufous hummingbirds throughout the day.",
-  },
-  {
-    id: "cam-orcas-island",
-    name: "Orcas Island Orca Cam",
-    location: "San Juan Islands, Washington",
-    country: "United States",
-    coordinates: [-122.9507, 48.5978],
-    youtubeVideoId: "cTsjMtjRLCo",
-    embedUrl: "https://www.youtube.com/embed/cTsjMtjRLCo?autoplay=1&mute=1&rel=0&modestbranding=1&enablejsapi=1",
-    thumbnail: "https://img.youtube.com/vi/cTsjMtjRLCo/maxresdefault.jpg",
-    isLive: true,
-    category: "marine",
-    description:
-      "Hydrophone cam from the San Juan Islands — listen and watch for orcas passing through Haro Strait.",
+    description: "Live from a kitten rescue sanctuary. Watch them play and sleep.",
   },
 ].filter((c) => ExploreCameraSchema.safeParse(c).success);
 
@@ -144,8 +122,6 @@ const SEED_CAMERAS: ExploreCamera[] = [
 
 const fetchCameras = unstable_cache(
   async (): Promise<ExploreCamera[]> => {
-    // In production, you may add a scrape attempt here.
-    // For now, return the curated seed dataset which is reliable and validated.
     return SEED_CAMERAS;
   },
   ["explore-org-cameras"],
