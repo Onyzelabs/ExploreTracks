@@ -30,26 +30,26 @@ export const CATEGORY_META: Record<
   CameraCategory,
   { emoji: string; color: string; label: string }
 > = {
-  birds:    { emoji: "🦅", color: "#a3e635", label: "Birds" },
-  mammals:  { emoji: "🦌", color: "#f97316", label: "Mammals" },
-  marine:   { emoji: "🐬", color: "#06b6d4", label: "Marine" },
-  bears:    { emoji: "🐻", color: "#f59e0b", label: "Bears" },
-  african:  { emoji: "🦁", color: "#fb923c", label: "African Wildlife" },
-  general:  { emoji: "📷", color: "#a78bfa", label: "General" },
+  birds: { emoji: "🦅", color: "#a3e635", label: "Birds" },
+  mammals: { emoji: "🐾", color: "#f97316", label: "Mammals" },
+  marine: { emoji: "🐬", color: "#06b6d4", label: "Marine" },
+  bears: { emoji: "🐻", color: "#f59e0b", label: "Bears" },
+  african: { emoji: "🦁", color: "#fb923c", label: "African Wildlife" },
+  general: { emoji: "📷", color: "#a78bfa", label: "General" },
 };
 
 export const ANIMAL_TYPE_META: Record<
   AnimalType,
   { emoji: string; color: string; label: string }
 > = {
-  bird:          { emoji: "🦅", color: "#a3e635", label: "Birds" },
-  mammal:        { emoji: "🦌", color: "#f97316", label: "Mammals" },
+  bird: { emoji: "🦅", color: "#a3e635", label: "Birds" },
+  mammal: { emoji: "🐾", color: "#f97316", label: "Mammals" },
   marine_mammal: { emoji: "🐬", color: "#06b6d4", label: "Marine Mammals" },
-  bear:          { emoji: "🐻", color: "#f59e0b", label: "Bears" },
-  reptile:       { emoji: "🦎", color: "#4ade80", label: "Reptiles" },
-  fish:          { emoji: "🐟", color: "#38bdf8", label: "Fish" },
-  insect:        { emoji: "🦋", color: "#e879f9", label: "Insects" },
-  unknown:       { emoji: "🐾", color: "#9ca3af", label: "Unknown" },
+  bear: { emoji: "🐻", color: "#f59e0b", label: "Bears" },
+  reptile: { emoji: "🦎", color: "#4ade80", label: "Reptiles" },
+  fish: { emoji: "🐟", color: "#38bdf8", label: "Fish" },
+  insect: { emoji: "🦋", color: "#e879f9", label: "Insects" },
+  unknown: { emoji: "❔", color: "#9ca3af", label: "Unknown" },
 };
 
 // ─── Explore.org Camera ───────────────────────────────────────────────────────
@@ -111,13 +111,13 @@ export type LiveChatMessage = z.infer<typeof LiveChatMessageSchema>;
 export interface FilterState {
   cameraCategories: Set<CameraCategory>;
   animalTypes: Set<AnimalType>;
-  showLiveOnly: boolean;
+  searchText: string;
 }
 
 export const DEFAULT_FILTER: FilterState = {
   cameraCategories: new Set(Object.keys(CATEGORY_META) as CameraCategory[]),
   animalTypes: new Set(Object.keys(ANIMAL_TYPE_META) as AnimalType[]),
-  showLiveOnly: false,
+  searchText: "",
 };
 
 // ─── Multi-Video Panel State ──────────────────────────────────────────────────

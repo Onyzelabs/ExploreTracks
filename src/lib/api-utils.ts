@@ -6,7 +6,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode: number = 500,
-    public readonly code: string = "INTERNAL_ERROR"
+    public readonly code: string = "INTERNAL_ERROR",
   ) {
     super(message);
     this.name = "ApiError";
@@ -18,7 +18,7 @@ export class ApiError extends Error {
  * All unhandled errors are caught and returned as { success: false } JSON.
  */
 export function withErrorHandler(
-  handler: (req: Request, ctx?: unknown) => Promise<Response>
+  handler: (req: Request, ctx?: unknown) => Promise<Response>,
 ) {
   return async (req: Request, ctx?: unknown): Promise<Response> => {
     try {
@@ -27,13 +27,17 @@ export function withErrorHandler(
       if (err instanceof ApiError) {
         return Response.json(
           { success: false, error: err.message, code: err.code },
-          { status: err.statusCode }
+          { status: err.statusCode },
         );
       }
       console.error("[API] Unhandled error:", err);
       return Response.json(
-        { success: false, error: "Internal server error", code: "INTERNAL_ERROR" },
-        { status: 500 }
+        {
+          success: false,
+          error: "Internal server error",
+          code: "INTERNAL_ERROR",
+        },
+        { status: 500 },
       );
     }
   };
@@ -49,7 +53,7 @@ export function requireEnv(key: string): string {
     throw new ApiError(
       `Missing required environment variable: ${key}`,
       500,
-      "MISSING_ENV"
+      "MISSING_ENV",
     );
   }
   return val;

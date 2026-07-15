@@ -26,7 +26,9 @@ function getFreeLane(): number {
   return freeLane;
 }
 
-export function useDanmaku(containerRef: React.RefObject<HTMLDivElement | null>) {
+export function useDanmaku(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+) {
   const shoot = useCallback(
     (message: LiveChatMessage) => {
       const container = containerRef.current;
@@ -59,7 +61,7 @@ export function useDanmaku(containerRef: React.RefObject<HTMLDivElement | null>)
       el.addEventListener("animationend", cleanup, { once: true });
       setTimeout(cleanup, duration + 500); // Safety fallback cleanup
     },
-    [containerRef]
+    [containerRef],
   );
 
   return { shoot };

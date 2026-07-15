@@ -14,7 +14,15 @@ export const metadata: Metadata = {
   title: "ExploreTracks — Live Wildlife Cams & Animal Migration Tracker",
   description:
     "Explore live wildlife camera streams from explore.org and track real-time animal migration routes from Movebank on an interactive WebGIS map.",
-  keywords: ["wildlife", "animal tracking", "WebGIS", "explore.org", "Movebank", "migration", "live cams"],
+  keywords: [
+    "wildlife",
+    "animal tracking",
+    "WebGIS",
+    "explore.org",
+    "Movebank",
+    "migration",
+    "live cams",
+  ],
   icons: { icon: "/icon.png" },
   openGraph: {
     title: "ExploreTracks",

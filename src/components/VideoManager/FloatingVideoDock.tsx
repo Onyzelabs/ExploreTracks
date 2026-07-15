@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Rnd } from "react-rnd";
 import type { ExploreCamera } from "@/lib/types";
 import type { LiveChatMessage } from "@/lib/types";
 import { CATEGORY_META } from "@/lib/types";
 import { useDanmaku } from "@/components/Danmaku/DanmakuOverlay";
 import { useYtChat } from "@/lib/hooks";
-
-const MAX_PANELS = 4;
 
 interface FloatingVideoPanelProps {
   camera: ExploreCamera;
@@ -20,7 +19,12 @@ interface FloatingVideoPanelProps {
  * One floating video panel. Handles its own danmaku + YouTube chat polling.
  * Embed URL: mute=1 for autoplay compliance, origin for JS API, rel=0 for clean UI.
  */
-function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoPanelProps) {
+function FloatingVideoPanel({
+  camera,
+  slot,
+  totalOpen,
+  onClose,
+}: FloatingVideoPanelProps) {
   const danmakuRef = useRef<HTMLDivElement>(null);
   const { shoot } = useDanmaku(danmakuRef);
   const [embedError, setEmbedError] = useState(false);
@@ -29,7 +33,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
 
   const handleMessages = useCallback(
     (msgs: LiveChatMessage[]) => msgs.forEach((m) => shoot(m)),
-    [shoot]
+    [shoot],
   );
 
   useYtChat(camera.youtubeVideoId, {
@@ -42,6 +46,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
   const embedUrl = [
     `https://www.youtube.com/embed/${camera.youtubeVideoId}`,
     "?autoplay=1",
+    "&mute=1",
     "&rel=0",
     "&modestbranding=1",
     "&enablejsapi=1",
@@ -51,17 +56,18 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
   return (
     <div
       id={`video-panel-${camera.id}`}
-      className="video-panel flex flex-col"
-      style={{ width: totalOpen === 1 ? 420 : 320 }}
+      className="video-panel flex flex-col w-full h-full"
     >
-      {/* Panel header */}
+      {/* Panel header - Draggable area */}
       <div
-        className="flex items-center gap-2 px-3 py-2 border-b border-white/5 cursor-default select-none"
+        className="drag-handle flex items-center gap-2 px-3 py-2 border-b border-white/5 cursor-move select-none"
         style={{ borderColor: `${meta.color}22` }}
       >
-        <span className="text-base leading-none">{meta.emoji}</span>
+        <span className="text-base leading-none pointer-events-none">
+          {meta.emoji}
+        </span>
         <span
-          className="text-sm font-bold truncate flex-1"
+          className="text-base font-bold truncate flex-1"
           style={{ fontFamily: "var(--font-sans)", color: meta.color }}
         >
           {camera.name}
@@ -83,7 +89,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
         <button
           id={`minimize-video-${camera.id}`}
           onClick={() => setIsMinimized((v) => !v)}
-          className="w-5 h-5 flex items-center justify-center text-neutral-500 hover:text-neutral-200 transition-colors text-xs"
+          className="w-5 h-5 flex items-center justify-center text-neutral-500 hover:text-neutral-200 transition-colors text-sm"
           aria-label={isMinimized ? "Expand" : "Minimize"}
         >
           {isMinimized ? "▲" : "▼"}
@@ -91,7 +97,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
         <button
           id={`close-video-${camera.id}`}
           onClick={() => onClose(camera.id)}
-          className="w-5 h-5 flex items-center justify-center text-neutral-500 hover:text-red-400 transition-colors text-xs"
+          className="w-5 h-5 flex items-center justify-center text-neutral-500 hover:text-red-400 transition-colors text-sm"
           aria-label="Close"
         >
           ✕
@@ -100,19 +106,22 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
 
       {/* Video content */}
       {!isMinimized && (
-        <div className="relative" style={{ aspectRatio: "16/9" }}>
+        <div
+          className="relative flex-1 bg-black overflow-hidden"
+          style={{ minHeight: 0 }}
+        >
           {embedError ? (
             /* Embedding disabled fallback */
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900 p-4 text-center">
               <span className="text-2xl">{meta.emoji}</span>
-              <p className="text-xs text-neutral-400 leading-relaxed">
+              <p className="text-sm text-neutral-400 leading-relaxed">
                 Embedding is disabled for this stream by the broadcaster.
               </p>
               <a
                 href={`https://www.youtube.com/watch?v=${camera.youtubeVideoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 transition-colors font-medium"
+                className="text-sm px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 transition-colors font-medium"
               >
                 Watch on YouTube ↗
               </a>
@@ -129,7 +138,13 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
                 onError={() => setEmbedError(true)}
               />
               {/* Danmaku overlay */}
-              {showDanmaku && <div ref={danmakuRef} className="danmaku-container" aria-hidden />}
+              {showDanmaku && (
+                <div
+                  ref={danmakuRef}
+                  className="danmaku-container"
+                  aria-hidden
+                />
+              )}
             </>
           )}
         </div>
@@ -143,7 +158,9 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
             background: `linear-gradient(90deg, ${meta.color}18, transparent)`,
           }}
         >
-          <span className="text-[10px] text-neutral-500">{camera.location}</span>
+          <span className="text-[10px] text-neutral-500">
+            {camera.location}
+          </span>
         </div>
       )}
     </div>
@@ -152,30 +169,88 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
 
 // ─── Manager ─────────────────────────────────────────────────────────────────
 
+import type { OpenVideoPanel } from "@/lib/types";
+
 interface FloatingVideoDockProps {
-  openPanels: ExploreCamera[];
+  openPanels: OpenVideoPanel[];
   onClose: (id: string) => void;
 }
 
-export default function FloatingVideoDock({ openPanels, onClose }: FloatingVideoDockProps) {
-  if (openPanels.length === 0) return null;
+export default function FloatingVideoDock({
+  openPanels,
+  onClose,
+}: FloatingVideoDockProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || openPanels.length === 0) return null;
+
+  const getInitialLayout = (slot: number, total: number) => {
+    // Determine a responsive width based on screen size
+    const isMobile = window.innerWidth < 768;
+    const baseWidth =
+      total === 1 ? (isMobile ? 300 : 420) : isMobile ? 260 : 320;
+    const height = baseWidth * 0.5625 + 40; // 16:9 ratio + header height
+
+    const paddingX = 16;
+    const paddingY = 32;
+    const gap = 16;
+
+    // Arrange in a grid starting from bottom-right!
+    // Estimate how many columns fit on screen
+    const maxCols = Math.max(
+      1,
+      Math.floor((window.innerWidth - paddingX * 2) / (baseWidth + gap)),
+    );
+
+    const col = slot % maxCols;
+    const row = Math.floor(slot / maxCols);
+
+    // Calculate grid position from bottom right
+    let x = window.innerWidth - paddingX - (col + 1) * baseWidth - col * gap;
+    let y = window.innerHeight - paddingY - (row + 1) * height - row * gap;
+
+    // Safety fallback clamp (in case screen is weirdly small)
+    x = Math.max(0, x);
+    y = Math.max(0, y);
+
+    return { x, y, width: baseWidth, height };
+  };
 
   return (
     <div
       id="floating-video-dock"
-      className="absolute bottom-8 right-4 z-30 flex flex-row-reverse flex-wrap-reverse gap-3 items-end"
-      style={{ maxWidth: "calc(100vw - 2rem)", pointerEvents: "none" }}
+      className="fixed inset-0 z-50 pointer-events-none"
     >
-      {openPanels.map((cam, i) => (
-        <div key={cam.id} style={{ pointerEvents: "auto" }}>
-          <FloatingVideoPanel
-            camera={cam}
-            slot={i}
-            totalOpen={openPanels.length}
-            onClose={onClose}
-          />
-        </div>
-      ))}
+      {openPanels.map((panel) => {
+        const layout = getInitialLayout(panel.slot, openPanels.length);
+        return (
+          <Rnd
+            key={panel.camera.id}
+            default={{
+              x: layout.x,
+              y: layout.y,
+              width: layout.width,
+              height: layout.height,
+            }}
+            minWidth={240}
+            minHeight={175}
+            bounds="window"
+            dragHandleClassName="drag-handle"
+            style={{ pointerEvents: "auto", position: "absolute" }}
+          >
+            <FloatingVideoPanel
+              camera={panel.camera}
+              slot={panel.slot}
+              totalOpen={openPanels.length}
+              onClose={onClose}
+            />
+          </Rnd>
+        );
+      })}
     </div>
   );
 }

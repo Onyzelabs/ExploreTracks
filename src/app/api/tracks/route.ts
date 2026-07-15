@@ -22,13 +22,28 @@ import { ApiError, requireEnv, withErrorHandler } from "@/lib/api-utils";
  */
 function inferAnimalType(species: string): AnimalType {
   const s = species.toLowerCase();
-  if (/aves|accipiter|pandion|aquila|haliaeetus|grus|ciconia|anser|falco|strix/.test(s)) return "bird";
-  if (/cetacea|megaptera|balaenoptera|delphin|orca|physeter/.test(s)) return "marine_mammal";
-  if (/carcharodon|isurus|sphyrna|rhincodon|shark|thunnus|gadus|anguilla/.test(s)) return "fish";
+  if (
+    /aves|accipiter|pandion|aquila|haliaeetus|grus|ciconia|anser|falco|strix/.test(
+      s,
+    )
+  )
+    return "bird";
+  if (/cetacea|megaptera|balaenoptera|delphin|orca|physeter/.test(s))
+    return "marine_mammal";
+  if (
+    /carcharodon|isurus|sphyrna|rhincodon|shark|thunnus|gadus|anguilla/.test(s)
+  )
+    return "fish";
   if (/ursus|ailuropoda/.test(s)) return "bear";
-  if (/reptilia|testudines|caretta|chelonia|crocodyl|iguana|varanus/.test(s)) return "reptile";
+  if (/reptilia|testudines|caretta|chelonia|crocodyl|iguana|varanus/.test(s))
+    return "reptile";
   if (/lepidoptera|apis|bombus|danaus/.test(s)) return "insect";
-  if (/mammalia|loxodonta|panthera|acinonyx|equus|cervus|alces|canis|vulpes|odocoileus|rangifer/.test(s)) return "mammal";
+  if (
+    /mammalia|loxodonta|panthera|acinonyx|equus|cervus|alces|canis|vulpes|odocoileus|rangifer/.test(
+      s,
+    )
+  )
+    return "mammal";
   return "unknown";
 }
 
@@ -49,11 +64,11 @@ const SEED_TRACKS: AnimalTrack[] = [
     tags: ["raptor", "migratory", "Europe"],
     currentPosition: [13.405, 52.52],
     coordinates: [
-      { longitude: -7.0,  latitude: 36.0, timestamp: 1700000000000 },
-      { longitude:  0.5,  latitude: 40.5, timestamp: 1700200000000 },
-      { longitude:  5.1,  latitude: 44.8, timestamp: 1700400000000 },
-      { longitude:  9.2,  latitude: 47.9, timestamp: 1700600000000 },
-      { longitude: 13.4,  latitude: 52.5, timestamp: 1700800000000 },
+      { longitude: -7.0, latitude: 36.0, timestamp: 1700000000000 },
+      { longitude: 0.5, latitude: 40.5, timestamp: 1700200000000 },
+      { longitude: 5.1, latitude: 44.8, timestamp: 1700400000000 },
+      { longitude: 9.2, latitude: 47.9, timestamp: 1700600000000 },
+      { longitude: 13.4, latitude: 52.5, timestamp: 1700800000000 },
     ],
   },
   {
@@ -125,7 +140,7 @@ const SEED_TRACKS: AnimalTrack[] = [
     tags: ["seabird", "Southern Ocean", "long-range"],
     currentPosition: [60.0, -45.0],
     coordinates: [
-      { longitude:  0.0, latitude: -55.0, timestamp: 1700000000000 },
+      { longitude: 0.0, latitude: -55.0, timestamp: 1700000000000 },
       { longitude: 20.0, latitude: -50.0, timestamp: 1700200000000 },
       { longitude: 40.0, latitude: -47.0, timestamp: 1700400000000 },
       { longitude: 55.0, latitude: -44.0, timestamp: 1700600000000 },
@@ -151,7 +166,6 @@ const SEED_TRACKS: AnimalTrack[] = [
     ],
   },
 ];
-
 
 // Movebank event (GPS fix) shape from the API (CSV headers use underscores)
 const MovebankEventSchema = z.object({
@@ -204,18 +218,41 @@ function movebankAuthHeader(): string {
 }
 
 /**
+ * Parse a single CSV line honoring quotes.
+ */
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+/**
  * Fetch all events for a single Movebank study.
  * Requests the last 30 days of data, ordered by timestamp ascending.
  */
 async function fetchStudyEvents(
   studyId: number,
-  authHeader: string
+  authHeader: string,
 ): Promise<MovebankEvent[]> {
   const params = new URLSearchParams({
     entity_type: "event",
     study_id: studyId.toString(),
-    attributes: "individual_local_identifier,location_long,location_lat,timestamp,ground_speed",
-    _cb: Date.now().toString()
+    attributes:
+      "individual_local_identifier,location_long,location_lat,timestamp,ground_speed",
+    _cb: Date.now().toString(),
   });
 
   const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
@@ -223,27 +260,37 @@ async function fetchStudyEvents(
       Authorization: authHeader,
       Accept: "application/json",
     },
-    next: { revalidate: 300 },
   });
 
   if (res.status === 401) {
-    throw new ApiError("Movebank authentication failed. Check MOVEBANK_USERNAME and MOVEBANK_PASSWORD.", 401, "MOVEBANK_AUTH");
+    throw new ApiError(
+      "Movebank authentication failed. Check MOVEBANK_USERNAME and MOVEBANK_PASSWORD.",
+      401,
+      "MOVEBANK_AUTH",
+    );
   }
   if (res.status === 403) {
-    throw new ApiError(`Access denied for Movebank study ${studyId}. You may need to accept the data license.`, 403, "MOVEBANK_FORBIDDEN");
+    throw new ApiError(
+      `Access denied for Movebank study ${studyId}. You may need to accept the data license.`,
+      403,
+      "MOVEBANK_FORBIDDEN",
+    );
   }
   if (!res.ok) {
-    throw new ApiError(`Movebank returned HTTP ${res.status} for study ${studyId}`, 502, "UPSTREAM_ERROR");
+    throw new ApiError(
+      `Movebank returned HTTP ${res.status} for study ${studyId}`,
+      502,
+      "UPSTREAM_ERROR",
+    );
   }
 
   const text = await res.text();
   const lines = text.trim().split("\n");
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map(h => h.trim());
-  const raw = lines.slice(1).map(line => {
-    // Simple CSV split (Movebank data for these fields doesn't contain commas inside quotes)
-    const values = line.split(",");
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const raw = lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
     const obj: Record<string, any> = {};
     headers.forEach((h, i) => {
       obj[h] = values[i] ? values[i].replace(/^"|"$/g, "") : undefined;
@@ -251,10 +298,15 @@ async function fetchStudyEvents(
     return obj;
   });
 
-  const parsed = raw.map(item => MovebankEventSchema.safeParse(item));
-  const failed = parsed.filter(r => !r.success);
+  const parsed = raw.map((item) => MovebankEventSchema.safeParse(item));
+  const failed = parsed.filter((r) => !r.success);
   if (failed.length > 0) {
-    console.error("[/api/tracks] Parse error on first failed item:", failed[0].error, "Raw item:", raw[parsed.indexOf(failed[0])]);
+    console.error(
+      "[/api/tracks] Parse error on first failed item:",
+      failed[0].error,
+      "Raw item:",
+      raw[parsed.indexOf(failed[0])],
+    );
   }
 
   return parsed
@@ -267,17 +319,15 @@ async function fetchStudyEvents(
  */
 async function fetchStudyMeta(
   studyId: number,
-  authHeader: string
+  authHeader: string,
 ): Promise<{ name: string }> {
   const params = new URLSearchParams({
     entity_type: "study",
-    study_id: studyId.toString(),
-    format: "json",
+    id: studyId.toString(),
   });
 
   const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
-    headers: { Authorization: authHeader, Accept: "application/json" },
-    next: { revalidate: 86400 }, // Study names change very rarely
+    headers: { Authorization: authHeader },
   });
 
   if (!res.ok) return { name: `Study ${studyId}` };
@@ -286,16 +336,74 @@ async function fetchStudyMeta(
   const lines = text.trim().split("\n");
   if (lines.length < 2) return { name: `Study ${studyId}` };
 
-  const headers = lines[0].split(",").map(h => h.trim());
+  const headers = lines[0].split(",").map((h) => h.trim());
   const nameIdx = headers.indexOf("name");
-  
+
   if (nameIdx !== -1) {
-    const values = lines[1].split(",");
-    const name = values[nameIdx] ? values[nameIdx].replace(/^"|"$/g, "") : `Study ${studyId}`;
+    const values = parseCsvLine(lines[1]);
+    const name = values[nameIdx]
+      ? values[nameIdx].replace(/^"|"$/g, "")
+      : `Study ${studyId}`;
     return { name };
   }
 
   return { name: `Study ${studyId}` };
+}
+
+/**
+ * Fetch individuals metadata to resolve actual species and names
+ */
+async function fetchStudyIndividuals(
+  studyId: number,
+  authHeader: string,
+): Promise<Map<string, { species: string; name: string }>> {
+  const params = new URLSearchParams({
+    entity_type: "individual",
+    study_id: studyId.toString(),
+  });
+
+  const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
+    headers: { Authorization: authHeader },
+  });
+
+  const map = new Map<string, { species: string; name: string }>();
+  if (!res.ok) {
+    throw new ApiError(
+      `Movebank returned HTTP ${res.status} for individuals of study ${studyId}`,
+      502,
+      "UPSTREAM_ERROR",
+    );
+  }
+
+  const text = await res.text();
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return map;
+
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const localIdIdx = headers.indexOf("local_identifier");
+  const taxonIdx = headers.indexOf("taxon_canonical_name");
+  const nickIdx = headers.indexOf("nick_name");
+
+  if (localIdIdx === -1) return map;
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCsvLine(lines[i]);
+    const localId = values[localIdIdx]?.replace(/^"|"$/g, "");
+    if (!localId) continue;
+
+    const taxon =
+      taxonIdx !== -1 && values[taxonIdx]
+        ? values[taxonIdx].replace(/^"|"$/g, "")
+        : "Unknown";
+    const nick =
+      nickIdx !== -1 && values[nickIdx]
+        ? values[nickIdx].replace(/^"|"$/g, "")
+        : localId;
+
+    map.set(localId, { species: taxon, name: nick });
+  }
+
+  return map;
 }
 
 /**
@@ -304,9 +412,10 @@ async function fetchStudyMeta(
  */
 function groupEventsIntoTracks(
   events: MovebankEvent[],
+  individuals: Map<string, { species: string; name: string }>,
   studyId: number,
   studyName: string,
-  colorOffset: number
+  colorOffset: number,
 ): AnimalTrack[] {
   const byIndividual = new Map<string, MovebankEvent[]>();
 
@@ -320,31 +429,53 @@ function groupEventsIntoTracks(
   let i = 0;
 
   for (const [name, evts] of byIndividual.entries()) {
+    // Ensure we have valid events
+    if (evts.length === 0) continue;
+
+    // Sort by timestamp
     const sorted = evts
       .map((e) => ({
-        longitude: e.location_long,
-        latitude: e.location_lat,
+        longitude: parseFloat(e.location_long),
+        latitude: parseFloat(e.location_lat),
         timestamp: new Date(e.timestamp).getTime(),
-        speed: e.ground_speed,
+        speed: e.ground_speed ? parseFloat(e.ground_speed) : undefined,
       }))
-      .filter((p) => !isNaN(p.longitude) && !isNaN(p.latitude))
+      .filter(
+        (e) => !isNaN(e.longitude) && !isNaN(e.latitude) && !isNaN(e.timestamp),
+      )
       .sort((a, b) => a.timestamp - b.timestamp);
 
     if (sorted.length === 0) continue;
 
-    const last = sorted[sorted.length - 1];
-    const species = evts[0]?.individual_taxon_canonical_name ?? "Unknown";
+    // Filter to only show the last 6 months of data for this specific animal
+    const latestTimestamp = sorted[sorted.length - 1].timestamp;
+    const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
+    const recentSorted = sorted.filter(
+      (e) => e.timestamp >= latestTimestamp - sixMonthsMs,
+    );
+
+    if (recentSorted.length === 0) continue;
+
+    const last = recentSorted[recentSorted.length - 1];
+
+    // Resolve real species and name from individual metadata
+    const meta = individuals.get(name);
+    const species =
+      meta?.species && meta.species !== "Unknown"
+        ? meta.species
+        : (evts[0]?.individual_taxon_canonical_name ?? "Unknown");
+    const individualName = meta?.name && meta.name !== name ? meta.name : name;
 
     const parsed = AnimalTrackSchema.safeParse({
       id: `track-${studyId}-${name.replace(/\s+/g, "-").toLowerCase()}`,
-      individualName: name,
+      individualName: individualName,
       species,
-      commonName: name,
+      commonName: individualName,
       studyId,
       studyName,
       color: getColor(colorOffset + i),
       animalType: inferAnimalType(species),
-      coordinates: sorted,
+      coordinates: recentSorted,
       currentPosition: [last.longitude, last.latitude] as [number, number],
       tags: [species],
     });
@@ -366,7 +497,9 @@ const fetchAllTracks = unstable_cache(
     // If Movebank credentials are not configured, return seed data for development.
     // This allows the app to function without credentials during local development.
     if (!process.env.MOVEBANK_USERNAME || !process.env.MOVEBANK_STUDY_IDS) {
-      console.warn("[/api/tracks] Movebank env vars not set — returning seed data.");
+      console.warn(
+        "[/api/tracks] Movebank env vars not set — returning seed data.",
+      );
       return SEED_TRACKS;
     }
 
@@ -377,7 +510,11 @@ const fetchAllTracks = unstable_cache(
       .filter((n) => !isNaN(n));
 
     if (studyIds.length === 0) {
-      throw new ApiError("MOVEBANK_STUDY_IDS is empty or invalid.", 500, "CONFIG_ERROR");
+      throw new ApiError(
+        "MOVEBANK_STUDY_IDS is empty or invalid.",
+        500,
+        "CONFIG_ERROR",
+      );
     }
 
     const authHeader = movebankAuthHeader();
@@ -387,12 +524,13 @@ const fetchAllTracks = unstable_cache(
     // Fetch studies in parallel
     const results = await Promise.allSettled(
       studyIds.map(async (studyId) => {
-        const [meta, events] = await Promise.all([
+        const [meta, events, individuals] = await Promise.all([
           fetchStudyMeta(studyId, authHeader),
           fetchStudyEvents(studyId, authHeader),
+          fetchStudyIndividuals(studyId, authHeader),
         ]);
-        return { studyId, studyName: meta.name, events };
-      })
+        return { studyId, studyName: meta.name, events, individuals };
+      }),
     );
 
     for (const result of results) {
@@ -401,16 +539,30 @@ const fetchAllTracks = unstable_cache(
         console.error("[/api/tracks] Study fetch failed:", result.reason);
         continue;
       }
-      const { studyId, studyName, events } = result.value;
-      const tracks = groupEventsIntoTracks(events, studyId, studyName, colorOffset);
+      const { studyId, studyName, events, individuals } = result.value;
+      const tracks = groupEventsIntoTracks(
+        events,
+        individuals,
+        studyId,
+        studyName,
+        colorOffset,
+      );
       allTracks.push(...tracks);
       colorOffset += tracks.length;
     }
 
+    // If Movebank API failed or returned nothing (e.g. rate limits), fallback to seed data
+    if (allTracks.length === 0) {
+      console.warn(
+        "[/api/tracks] All tracks failed or empty, falling back to seed data.",
+      );
+      return SEED_TRACKS;
+    }
+
     return allTracks;
   },
-  ["movebank-tracks-v5"],
-  { revalidate: 300, tags: ["tracks"] }
+  ["movebank-tracks-v12"],
+  { revalidate: 300, tags: ["tracks"] },
 );
 
 export const GET = withErrorHandler(async () => {
@@ -427,6 +579,6 @@ export const GET = withErrorHandler(async () => {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
       },
-    }
+    },
   );
 });

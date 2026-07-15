@@ -33,7 +33,7 @@ const VideoListSchema = z.object({
           activeLiveChatId: z.string().optional(),
         })
         .optional(),
-    })
+    }),
   ),
 });
 
@@ -61,7 +61,7 @@ const ChatResponseSchema = z.object({
  */
 async function resolveActiveChatId(
   videoId: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<string | null> {
   const params = new URLSearchParams({
     part: "liveStreamingDetails",
@@ -78,7 +78,7 @@ async function resolveActiveChatId(
     throw new ApiError(
       `YouTube videos.list failed: ${body?.error?.message ?? res.status}`,
       502,
-      "YT_API_ERROR"
+      "YT_API_ERROR",
     );
   }
 
@@ -94,8 +94,12 @@ async function resolveActiveChatId(
 async function fetchChatMessages(
   liveChatId: string,
   apiKey: string,
-  pageToken?: string
-): Promise<{ messages: LiveChatMessage[]; pollingIntervalMillis: number; nextPageToken?: string }> {
+  pageToken?: string,
+): Promise<{
+  messages: LiveChatMessage[];
+  pollingIntervalMillis: number;
+  nextPageToken?: string;
+}> {
   const params = new URLSearchParams({
     part: "snippet,authorDetails",
     liveChatId,
@@ -112,7 +116,7 @@ async function fetchChatMessages(
     throw new ApiError(
       "YouTube API quota exceeded or access denied. Check your API key restrictions.",
       403,
-      "YT_QUOTA_EXCEEDED"
+      "YT_QUOTA_EXCEEDED",
     );
   }
   if (!res.ok) {
@@ -120,7 +124,7 @@ async function fetchChatMessages(
     throw new ApiError(
       `YouTube liveChatMessages.list failed: ${body?.error?.message ?? res.status}`,
       502,
-      "YT_API_ERROR"
+      "YT_API_ERROR",
     );
   }
 
@@ -149,7 +153,11 @@ export const GET = withErrorHandler(async (req, ctx) => {
   const { videoId } = await params;
 
   if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
-    throw new ApiError("Invalid YouTube video ID format.", 400, "INVALID_VIDEO_ID");
+    throw new ApiError(
+      "Invalid YouTube video ID format.",
+      400,
+      "INVALID_VIDEO_ID",
+    );
   }
 
   // If API key is not configured (e.g. local dev without credentials), return
@@ -157,7 +165,12 @@ export const GET = withErrorHandler(async (req, ctx) => {
   if (!process.env.YOUTUBE_API_KEY) {
     return Response.json({
       success: true,
-      data: { messages: [], pollingIntervalMillis: 60000, isLive: false, unconfigured: true },
+      data: {
+        messages: [],
+        pollingIntervalMillis: 60000,
+        isLive: false,
+        unconfigured: true,
+      },
     });
   }
 
@@ -195,6 +208,6 @@ export const GET = withErrorHandler(async (req, ctx) => {
         // No CDN caching — danmaku must be real-time
         "Cache-Control": "no-store",
       },
-    }
+    },
   );
 });

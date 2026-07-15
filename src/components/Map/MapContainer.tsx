@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
-import type { ExploreCamera, AnimalTrack, FilterState, SidebarContent } from "@/lib/types";
+import type {
+  ExploreCamera,
+  AnimalTrack,
+  FilterState,
+  SidebarContent,
+} from "@/lib/types";
 import { CATEGORY_META, ANIMAL_TYPE_META } from "@/lib/types";
 
 interface MapContainerProps {
@@ -11,15 +16,43 @@ interface MapContainerProps {
   filter: FilterState;
   openVideoIds: Set<string>;
   activeTrackId: string | null;
+  mapStyle: string;
   onOpenCamera: (camera: ExploreCamera) => void;
   onSelectAnimal: (content: SidebarContent) => void;
 }
 
-const BASEMAP_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json";
+const BASEMAP_STYLE =
+  "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json";
+
+const ESRI_SATELLITE_STYLE = {
+  version: 8,
+  sources: {
+    esri: {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri, Maxar, Earthstar Geographics",
+    },
+  },
+  layers: [
+    {
+      id: "satellite",
+      type: "raster",
+      source: "esri",
+      minzoom: 0,
+      maxzoom: 19,
+    },
+  ],
+};
 
 // ─── Marker builders ──────────────────────────────────────────────────────────
 
-function buildCameraMarker(camera: ExploreCamera, isOpen: boolean): HTMLElement {
+function buildCameraMarker(
+  camera: ExploreCamera,
+  isOpen: boolean,
+): HTMLElement {
   const meta = CATEGORY_META[camera.category];
   const el = document.createElement("div");
   el.id = `marker-cam-${camera.id}`;
@@ -95,6 +128,7 @@ export default function MapContainer({
   filter,
   openVideoIds,
   activeTrackId,
+  mapStyle,
   onOpenCamera,
   onSelectAnimal,
 }: MapContainerProps) {
@@ -105,12 +139,14 @@ export default function MapContainer({
   // Track which sources/layers/markers have been added — keyed by ID.
   // We NEVER fully wipe these; we only update visibility or replace on data change.
   const camMarkersRef = useRef<globalThis.Map<string, maplibregl.Marker>>(
-    new globalThis.Map()
+    new globalThis.Map(),
   );
   const animalMarkersRef = useRef<globalThis.Map<string, maplibregl.Marker>>(
-    new globalThis.Map()
+    new globalThis.Map(),
   );
   const trackSourcesRef = useRef<globalThis.Set<string>>(new globalThis.Set());
+  const popupRef = useRef<maplibregl.Popup | null>(null);
+  const markerPopupRef = useRef<maplibregl.Popup | null>(null);
 
   // ── One-time map init ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -132,7 +168,8 @@ export default function MapContainer({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: BASEMAP_STYLE,
+      style:
+        mapStyle === "satellite" ? (ESRI_SATELLITE_STYLE as any) : mapStyle,
       center: [20, 15],
       zoom: 2.1,
       pitch: 0,
@@ -141,7 +178,10 @@ export default function MapContainer({
     });
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+    map.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
+      "bottom-right",
+    );
     map.on("load", () => setIsLoaded(true));
 
     mapRef.current = map;
@@ -149,6 +189,10 @@ export default function MapContainer({
     return () => {
       map.remove();
       mapRef.current = null;
+      if (popupRef.current) popupRef.current.remove();
+      popupRef.current = null;
+      if (markerPopupRef.current) markerPopupRef.current.remove();
+      markerPopupRef.current = null;
       camMarkersRef.current.clear();
       animalMarkersRef.current.clear();
       trackSourcesRef.current.clear();
@@ -164,23 +208,65 @@ export default function MapContainer({
       const srcId = `et-track-src-${track.id}`;
       const glowId = `et-track-glow-${track.id}`;
       const lineId = `et-track-line-${track.id}`;
-      const visible = filter.animalTypes.has(track.animalType) && activeTrackId === track.id ? "visible" : "none";
+      const pointsId = `et-track-points-${track.id}`;
+      const search = filter.searchText.toLowerCase();
+      const matchesSearch =
+        search === "" ||
+        track.individualName.toLowerCase().includes(search) ||
+        track.commonName.toLowerCase().includes(search) ||
+        track.species.toLowerCase().includes(search);
+
+      const isVisible =
+        filter.animalTypes.has(track.animalType) &&
+        matchesSearch &&
+        activeTrackId === track.id;
 
       if (trackSourcesRef.current.has(srcId)) {
-        // Already added — just toggle visibility without touching geometry
-        if (map.getLayer(glowId)) map.setLayoutProperty(glowId, "visibility", visible);
-        if (map.getLayer(lineId)) map.setLayoutProperty(lineId, "visibility", visible);
+        const visibility = isVisible ? "visible" : "none";
+        if (map.getLayer(glowId))
+          map.setLayoutProperty(glowId, "visibility", visibility);
+        if (map.getLayer(lineId))
+          map.setLayoutProperty(lineId, "visibility", visibility);
+        if (map.getLayer(pointsId))
+          map.setLayoutProperty(pointsId, "visibility", visibility);
         return;
       }
 
       // First time: add source + layers
-      const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: track.coordinates.map((c) => [c.longitude, c.latitude]),
+      const features: GeoJSON.Feature[] = [
+        {
+          type: "Feature",
+          properties: { trackId: track.id, type: "line" },
+          geometry: {
+            type: "LineString",
+            coordinates: track.coordinates.map((c) => [
+              c.longitude,
+              c.latitude,
+            ]),
+          },
         },
+      ];
+
+      track.coordinates.forEach((c, index) => {
+        const isLatest = index === track.coordinates.length - 1;
+        features.push({
+          type: "Feature",
+          properties: {
+            trackId: track.id,
+            type: "point",
+            animalName: track.commonName || track.individualName,
+            timestamp: c.timestamp,
+            speed: c.speed ?? null,
+            color: track.color,
+            isLatest,
+          },
+          geometry: { type: "Point", coordinates: [c.longitude, c.latitude] },
+        });
+      });
+
+      const geojson: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features,
       };
 
       try {
@@ -190,7 +276,8 @@ export default function MapContainer({
           id: glowId,
           type: "line",
           source: srcId,
-          layout: { visibility: visible },
+          filter: ["==", "type", "line"],
+          layout: { visibility: isVisible ? "visible" : "none" },
           paint: {
             "line-color": track.color,
             "line-width": 10,
@@ -203,7 +290,8 @@ export default function MapContainer({
           id: lineId,
           type: "line",
           source: srcId,
-          layout: { visibility: visible },
+          filter: ["==", "type", "line"],
+          layout: { visibility: isVisible ? "visible" : "none" },
           paint: {
             "line-color": track.color,
             "line-width": 2,
@@ -212,13 +300,118 @@ export default function MapContainer({
           },
         });
 
+        map.addLayer({
+          id: pointsId,
+          type: "circle",
+          source: srcId,
+          filter: ["==", "type", "point"],
+          layout: { visibility: "visible" },
+          paint: {
+            "circle-radius": 5,
+            "circle-color": track.color,
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": "#ffffff",
+            "circle-opacity": isVisible ? 1 : 0,
+            "circle-stroke-opacity": isVisible ? 1 : 0,
+          },
+        });
+
+        // Add interactive hover behavior for points
+        map.on("mouseenter", pointsId, (e) => {
+          if (e.features && e.features.length > 0) {
+            const props = e.features[0].properties;
+            if (!props || props.isLatest) return;
+
+            map.getCanvas().style.cursor = "pointer";
+
+            const timeStr = new Date(props.timestamp).toLocaleString();
+            const speedStr =
+              props.speed != null ? `<br>Speed: ${props.speed} m/s` : "";
+
+            if (!popupRef.current) {
+              popupRef.current = new maplibregl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                offset: 10,
+                className: "et-popup",
+              });
+            }
+
+            popupRef.current
+              .setLngLat((e.features[0].geometry as any).coordinates)
+              .setHTML(
+                `
+                <div style="color: #fff; background: #1f2937; padding: 10px 16px; border-radius: 8px; border: 1px solid ${props.color}66; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); font-family: Inter, sans-serif; font-size: 14px;">
+                  <strong style="color: ${props.color}; font-size: 16px;">${props.animalName}</strong><br>
+                  <span style="opacity: 0.8; font-size: 14px; margin-top: 4px; display: inline-block;">${timeStr}</span>${speedStr}
+                </div>
+              `,
+              )
+              .addTo(map);
+
+            // Fix the ugly default popup background of Maplibre
+            const tip = popupRef.current
+              .getElement()
+              ?.querySelector(".maplibregl-popup-content") as HTMLElement;
+            if (tip) {
+              tip.style.background = "transparent";
+              tip.style.padding = "0";
+              tip.style.boxShadow = "none";
+            }
+          }
+        });
+
+        map.on("mouseleave", pointsId, () => {
+          map.getCanvas().style.cursor = "";
+          if (popupRef.current) {
+            popupRef.current.remove();
+          }
+        });
+
+        const handleRouteClick = (e: any) => {
+          if (!e.features || e.features.length === 0) return;
+          const props = e.features[0].properties;
+          if (!props || !props.trackId) return;
+
+          const clickedTrack = tracks.find((t) => t.id === props.trackId);
+          if (clickedTrack) {
+            onSelectAnimal({ type: "animal", track: clickedTrack });
+
+            // Zoom to track bounds
+            const bounds = new maplibregl.LngLatBounds();
+            clickedTrack.coordinates.forEach((c) => {
+              bounds.extend([c.longitude, c.latitude]);
+            });
+
+            if (!bounds.isEmpty()) {
+              map.fitBounds(bounds, {
+                padding: { top: 100, bottom: 100, left: 100, right: 450 },
+                duration: 1500,
+                essential: true,
+                maxZoom: 7,
+              });
+            }
+          }
+        };
+
+        map.on("click", lineId, handleRouteClick);
+        map.on("click", pointsId, handleRouteClick);
+
+        // Add hover cursor for the line itself
+        map.on(
+          "mouseenter",
+          lineId,
+          () => (map.getCanvas().style.cursor = "pointer"),
+        );
+        map.on("mouseleave", lineId, () => (map.getCanvas().style.cursor = ""));
+
         trackSourcesRef.current.add(srcId);
       } catch (err) {
         // Layer may already exist from a hot-reload — safe to ignore
         console.warn("[MapContainer] Layer add error (likely HMR):", err);
       }
     });
-  }, [tracks, filter.animalTypes, activeTrackId, isLoaded]);
+  }, [tracks, filter.animalTypes, filter.searchText, activeTrackId, isLoaded]);
 
   // ── Camera markers: add new, update open-state styling, toggle visibility ──
   useEffect(() => {
@@ -227,9 +420,14 @@ export default function MapContainer({
 
     cameras.forEach((cam) => {
       const isOpen = openVideoIds.has(cam.id);
+      const search = filter.searchText.toLowerCase();
+      const matchesSearch =
+        search === "" ||
+        cam.name.toLowerCase().includes(search) ||
+        cam.location.toLowerCase().includes(search);
+
       const shouldShow =
-        filter.cameraCategories.has(cam.category) &&
-        (!filter.showLiveOnly || cam.isLive);
+        filter.cameraCategories.has(cam.category) && matchesSearch;
 
       if (camMarkersRef.current.has(cam.id)) {
         // Marker exists — update visibility and open-state styling in-place.
@@ -243,7 +441,9 @@ export default function MapContainer({
         const icon = el.querySelector(".cam-icon") as HTMLElement | null;
         if (icon) {
           const meta = CATEGORY_META[cam.category];
-          icon.style.background = isOpen ? meta.color + "44" : meta.color + "1a";
+          icon.style.background = isOpen
+            ? meta.color + "44"
+            : meta.color + "1a";
           icon.style.borderColor = isOpen ? meta.color : meta.color + "aa";
           icon.style.boxShadow = isOpen
             ? `0 0 20px ${meta.color}88, 0 0 40px ${meta.color}33`
@@ -256,13 +456,63 @@ export default function MapContainer({
       const el = buildCameraMarker(cam, isOpen);
       el.style.display = shouldShow ? "flex" : "none";
 
+      let hideTimeout: NodeJS.Timeout;
+
       el.addEventListener("mouseenter", () => {
+        if (hideTimeout) clearTimeout(hideTimeout);
         const icon = el.querySelector(".cam-icon") as HTMLElement | null;
         if (icon) icon.style.filter = "brightness(1.3)";
+
+        if (!markerPopupRef.current) {
+          markerPopupRef.current = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            offset: 15,
+          });
+        }
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <div style="background: var(--color-surface-900); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); width: 240px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+            <div style="font-family: var(--font-sans); font-size: 16px; font-weight: 600; line-height: 1.4; color: white; margin-bottom: 10px;">${cam.name}</div>
+            <div style="position: relative; width: 100%; border-radius: 6px; overflow: hidden; background: #000;">
+              <img 
+                src="${cam.thumbnail}" 
+                onerror="this.onerror=null; this.src='https://img.youtube.com/vi/${cam.id}/hqdefault.jpg';" 
+                style="width: 100%; display: block; object-fit: cover; aspect-ratio: 16/9;" 
+                alt="Live Preview" 
+              />
+            </div>
+          </div>
+        `;
+
+        div.addEventListener("mouseenter", () => {
+          if (hideTimeout) clearTimeout(hideTimeout);
+        });
+        div.addEventListener("mouseleave", () => {
+          if (markerPopupRef.current) markerPopupRef.current.remove();
+        });
+
+        markerPopupRef.current
+          .setDOMContent(div)
+          .setLngLat(cam.coordinates)
+          .addTo(map);
+
+        const tip = markerPopupRef.current
+          .getElement()
+          ?.querySelector(".maplibregl-popup-content") as HTMLElement;
+        if (tip) {
+          tip.style.background = "transparent";
+          tip.style.padding = "0";
+          tip.style.boxShadow = "none";
+        }
       });
       el.addEventListener("mouseleave", () => {
         const icon = el.querySelector(".cam-icon") as HTMLElement | null;
         if (icon) icon.style.filter = "";
+        hideTimeout = setTimeout(() => {
+          if (markerPopupRef.current) markerPopupRef.current.remove();
+        }, 150);
       });
       el.addEventListener("click", () => onOpenCamera(cam));
 
@@ -272,7 +522,14 @@ export default function MapContainer({
 
       camMarkersRef.current.set(cam.id, marker);
     });
-  }, [cameras, filter.cameraCategories, filter.showLiveOnly, openVideoIds, isLoaded, onOpenCamera]);
+  }, [
+    cameras,
+    filter.cameraCategories,
+    filter.searchText,
+    openVideoIds,
+    isLoaded,
+    onOpenCamera,
+  ]);
 
   // ── Animal markers: add new, toggle visibility ────────────────────────────
   useEffect(() => {
@@ -282,7 +539,15 @@ export default function MapContainer({
     tracks.forEach((track) => {
       if (!track.currentPosition) return;
 
-      const shouldShow = filter.animalTypes.has(track.animalType);
+      const search = filter.searchText.toLowerCase();
+      const matchesSearch =
+        search === "" ||
+        track.individualName.toLowerCase().includes(search) ||
+        track.commonName.toLowerCase().includes(search) ||
+        track.species.toLowerCase().includes(search);
+
+      const shouldShow =
+        filter.animalTypes.has(track.animalType) && matchesSearch;
 
       if (animalMarkersRef.current.has(track.id)) {
         // Already exists — just toggle visibility
@@ -298,12 +563,67 @@ export default function MapContainer({
       el.addEventListener("mouseenter", () => {
         const icon = el.querySelector(".animal-icon") as HTMLElement | null;
         if (icon) icon.style.filter = "brightness(1.3)";
+
+        if (!markerPopupRef.current) {
+          markerPopupRef.current = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            offset: 15,
+          });
+        }
+        markerPopupRef.current
+          .setLngLat(track.currentPosition!)
+          .setHTML(
+            `
+            <div style="background: var(--color-surface-900); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); width: 180px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; text-align: center;">
+              <div style="font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: white; margin-bottom: 4px;">${track.individualName}</div>
+              <div style="font-family: var(--font-sans); font-size: 14px; color: #a1a1aa; margin-bottom: 8px;">${track.species}</div>
+              <img id="hover-wiki-img-${track.id}" style="width: 100%; border-radius: 6px; display: none; object-fit: cover; height: 110px;" />
+            </div>
+          `,
+          )
+          .addTo(map);
+
+        const tip = markerPopupRef.current
+          .getElement()
+          ?.querySelector(".maplibregl-popup-content") as HTMLElement;
+        if (tip) {
+          tip.style.background = "transparent";
+          tip.style.padding = "0";
+          tip.style.boxShadow = "none";
+        }
+
+        if (track.species && track.species !== "Unknown") {
+          fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(track.species)}`,
+          )
+            .then((r) => r.json())
+            .then((data) => {
+              const img = document.getElementById(
+                `hover-wiki-img-${track.id}`,
+              ) as HTMLImageElement;
+              if (img && data.thumbnail?.source) {
+                img.src = data.thumbnail.source;
+                img.style.display = "block";
+              }
+            })
+            .catch(() => {});
+        }
       });
       el.addEventListener("mouseleave", () => {
         const icon = el.querySelector(".animal-icon") as HTMLElement | null;
         if (icon) icon.style.filter = "";
+        if (markerPopupRef.current) markerPopupRef.current.remove();
       });
-      el.addEventListener("click", () => onSelectAnimal({ type: "animal", track }));
+      el.addEventListener("click", () => {
+        onSelectAnimal({ type: "animal", track });
+        map.flyTo({
+          center: track.currentPosition,
+          zoom: 6,
+          speed: 1.5,
+          essential: true,
+        });
+      });
 
       const marker = new maplibregl.Marker({ element: el, anchor: "center" })
         .setLngLat(track.currentPosition)
@@ -311,7 +631,7 @@ export default function MapContainer({
 
       animalMarkersRef.current.set(track.id, marker);
     });
-  }, [tracks, filter.animalTypes, isLoaded, onSelectAnimal]);
+  }, [tracks, filter.animalTypes, filter.searchText, isLoaded, onSelectAnimal]);
 
   return (
     <div className="relative w-full h-full">
@@ -319,7 +639,7 @@ export default function MapContainer({
       {!isLoaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--color-surface-950)]">
           <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
-          <p className="text-sm text-neutral-500">Loading map…</p>
+          <p className="text-base text-neutral-500">Loading map…</p>
         </div>
       )}
     </div>

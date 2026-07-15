@@ -47,7 +47,7 @@ export function useCameras(): UseCamerasResult {
       refreshInterval: 60 * 60 * 1000, // 1 hour
       revalidateOnFocus: false,
       dedupingInterval: 10 * 60 * 1000, // Dedupe for 10 min
-    }
+    },
   );
 
   return { cameras: data, isLoading, error, mutate };
@@ -70,7 +70,7 @@ export function useTracks(): UseTracksResult {
       refreshInterval: 5 * 60 * 1000, // 5 minutes
       revalidateOnFocus: true,
       dedupingInterval: 60 * 1000,
-    }
+    },
   );
 
   return { tracks: data, isLoading, error, mutate };
@@ -98,7 +98,7 @@ interface UseYtChatOptions {
  */
 export function useYtChat(
   videoId: string | null | undefined,
-  { onMessages, enabled = true }: UseYtChatOptions
+  { onMessages, enabled = true }: UseYtChatOptions,
 ) {
   const pageTokenRef = useRef<string | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,7 +121,8 @@ export function useYtChat(
 
       if (!json.success || !json.data) return;
 
-      const { messages, pollingIntervalMillis, nextPageToken, isLive } = json.data;
+      const { messages, pollingIntervalMillis, nextPageToken, isLive } =
+        json.data;
       isLiveRef.current = isLive;
 
       if (nextPageToken) {

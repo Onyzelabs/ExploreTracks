@@ -20,7 +20,7 @@ export default function CameraPanel({ camera, onClose }: CameraPanelProps) {
     (messages: LiveChatMessage[]) => {
       messages.forEach((msg) => shoot(msg));
     },
-    [shoot]
+    [shoot],
   );
 
   // Poll YouTube Live Chat API for this camera's stream
@@ -34,11 +34,13 @@ export default function CameraPanel({ camera, onClose }: CameraPanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="flex-shrink-0 flex items-center gap-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-xs font-semibold px-2 py-0.5 rounded-full">
+          <span className="flex-shrink-0 flex items-center gap-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-sm font-semibold px-2 py-0.5 rounded-full">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
             {isLive ? "LIVE" : "STREAM"}
           </span>
-          <h2 className="text-sm font-semibold text-neutral-100 truncate">{camera.name}</h2>
+          <h2 className="text-base font-semibold text-neutral-100 truncate">
+            {camera.name}
+          </h2>
         </div>
         <button
           id={`close-camera-panel-${camera.id}`}
@@ -70,7 +72,7 @@ export default function CameraPanel({ camera, onClose }: CameraPanelProps) {
 
       {/* Danmaku status indicator */}
       <div className="px-4 pt-3 flex items-center gap-2">
-        <span className="text-xs text-neutral-500">
+        <span className="text-sm text-neutral-500">
           {isLive
             ? "💬 Live chat → danmaku (via YouTube Data API)"
             : "⏸ Stream offline — danmaku paused"}
@@ -80,27 +82,38 @@ export default function CameraPanel({ camera, onClose }: CameraPanelProps) {
       {/* Camera Info */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div>
-          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Location</p>
-          <p className="text-sm text-neutral-200 font-medium">
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
+            Location
+          </p>
+          <p className="text-base text-neutral-200 font-medium">
             📍 {camera.location}, {camera.country}
           </p>
         </div>
 
         <div>
-          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Description</p>
-          <p className="text-sm text-neutral-300 leading-relaxed">{camera.description}</p>
-        </div>
-
-        <div>
-          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Coordinates</p>
-          <p className="text-xs text-neutral-400 font-mono">
-            {camera.coordinates[1].toFixed(4)}°N, {camera.coordinates[0].toFixed(4)}°E
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
+            Description
+          </p>
+          <p className="text-base text-neutral-300 leading-relaxed">
+            {camera.description}
           </p>
         </div>
 
         <div>
-          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Category</p>
-          <span className="inline-block text-xs px-2.5 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 capitalize font-medium">
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
+            Coordinates
+          </p>
+          <p className="text-sm text-neutral-400 font-mono">
+            {camera.coordinates[1].toFixed(4)}°N,{" "}
+            {camera.coordinates[0].toFixed(4)}°E
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
+            Category
+          </p>
+          <span className="inline-block text-sm px-2.5 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 capitalize font-medium">
             {camera.category}
           </span>
         </div>
@@ -110,7 +123,7 @@ export default function CameraPanel({ camera, onClose }: CameraPanelProps) {
           href={`https://explore.org`}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full text-center py-2.5 rounded-xl bg-orange-500/20 border border-orange-500/40 text-orange-400 text-sm font-semibold hover:bg-orange-500/30 hover:border-orange-500/60 transition-all duration-200"
+          className="block w-full text-center py-2.5 rounded-xl bg-orange-500/20 border border-orange-500/40 text-orange-400 text-base font-semibold hover:bg-orange-500/30 hover:border-orange-500/60 transition-all duration-200"
         >
           View on explore.org ↗
         </a>
