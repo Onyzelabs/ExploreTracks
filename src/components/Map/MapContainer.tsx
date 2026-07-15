@@ -10,6 +10,7 @@ interface MapContainerProps {
   tracks: AnimalTrack[];
   filter: FilterState;
   openVideoIds: Set<string>;
+  activeTrackId: string | null;
   onOpenCamera: (camera: ExploreCamera) => void;
   onSelectAnimal: (content: SidebarContent) => void;
 }
@@ -93,6 +94,7 @@ export default function MapContainer({
   tracks,
   filter,
   openVideoIds,
+  activeTrackId,
   onOpenCamera,
   onSelectAnimal,
 }: MapContainerProps) {
@@ -162,7 +164,7 @@ export default function MapContainer({
       const srcId = `et-track-src-${track.id}`;
       const glowId = `et-track-glow-${track.id}`;
       const lineId = `et-track-line-${track.id}`;
-      const visible = filter.animalTypes.has(track.animalType) ? "visible" : "none";
+      const visible = filter.animalTypes.has(track.animalType) && activeTrackId === track.id ? "visible" : "none";
 
       if (trackSourcesRef.current.has(srcId)) {
         // Already added — just toggle visibility without touching geometry
@@ -216,7 +218,7 @@ export default function MapContainer({
         console.warn("[MapContainer] Layer add error (likely HMR):", err);
       }
     });
-  }, [tracks, filter.animalTypes, isLoaded]);
+  }, [tracks, filter.animalTypes, activeTrackId, isLoaded]);
 
   // ── Camera markers: add new, update open-state styling, toggle visibility ──
   useEffect(() => {

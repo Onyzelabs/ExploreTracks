@@ -160,6 +160,7 @@ export default function Home() {
             tracks={tracks ?? []}
             filter={filter}
             openVideoIds={openVideoIds}
+            activeTrackId={sidebarContent?.type === "animal" ? sidebarContent.track.id : null}
             onOpenCamera={handleOpenCamera}
             onSelectAnimal={handleSelectAnimal}
           />

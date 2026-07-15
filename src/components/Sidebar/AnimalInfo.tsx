@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import type { AnimalTrack } from "@/lib/types";
 
 interface AnimalInfoProps {
@@ -12,6 +14,25 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
   const end = track.coordinates[track.coordinates.length - 1];
   const startDate = new Date(start.timestamp).toLocaleDateString();
   const endDate = new Date(end.timestamp).toLocaleDateString();
+
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setImageUrl(null);
+    if (!track.species || track.species === "Unknown") return;
+    
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(track.species)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (active && data.thumbnail?.source) {
+          setImageUrl(data.thumbnail.source);
+        }
+      })
+      .catch(err => console.error("Wiki fetch error:", err));
+
+    return () => { active = false; };
+  }, [track.species]);
 
   // Rough distance in km between first and last point (haversine)
   const distKm = haversine(
@@ -47,10 +68,21 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
 
       {/* Telemetry Notice */}
       <div className="px-4 pt-4">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs mb-4">
           <span>📡</span>
           <span><b>Telemetry Data Only:</b> This is GPS tracking data from Movebank, not a video feed.</span>
         </div>
+
+        {imageUrl && (
+          <div className="w-full h-40 rounded-xl overflow-hidden mb-4 border border-[var(--glass-border)] bg-black">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={imageUrl} 
+              alt={track.commonName} 
+              className="w-full h-full object-cover anim-fade-in"
+            />
+          </div>
+        )}
       </div>
 
       {/* Stats */}

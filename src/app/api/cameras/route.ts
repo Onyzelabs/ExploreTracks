@@ -26,7 +26,7 @@ const LOCATION_DICTIONARY = [
     category: "bears",
   },
   {
-    keywords: ["decorah eagle", "decorah", "bald eagle"],
+    keywords: ["decorah"],
     location: "Decorah, Iowa",
     country: "United States",
     coordinates: [-91.7854, 43.3017],
@@ -68,7 +68,7 @@ const LOCATION_DICTIONARY = [
     category: "bears",
   },
   {
-    keywords: ["kitten rescue", "cat"],
+    keywords: ["kitten rescue", "kitten"],
     location: "Los Angeles, California",
     country: "United States",
     coordinates: [-118.2437, 34.0522],
@@ -82,11 +82,39 @@ const LOCATION_DICTIONARY = [
     category: "bears",
   },
   {
-    keywords: ["africa", "watering hole", "tau", "tembe"],
+    keywords: ["africa", "watering hole", "tau", "tembe", "black eagle"],
     location: "South Africa",
     country: "South Africa",
     coordinates: [32.4657, -27.0167],
     category: "african",
+  },
+  {
+    keywords: ["two harbors", "catalina", "west end"],
+    location: "Catalina Island, California",
+    country: "United States",
+    coordinates: [-118.498, 33.438],
+    category: "birds",
+  },
+  {
+    keywords: ["philippine eagle"],
+    location: "Mindanao, Philippines",
+    country: "Philippines",
+    coordinates: [125.1716, 7.1907],
+    category: "birds",
+  },
+  {
+    keywords: ["fraser point", "sauces", "channel islands"],
+    location: "Channel Islands National Park, CA",
+    country: "United States",
+    coordinates: [-119.8, 34.0],
+    category: "birds",
+  },
+  {
+    keywords: ["audubon", "osprey"],
+    location: "Hog Island, Maine",
+    country: "United States",
+    coordinates: [-69.329, 43.957],
+    category: "birds",
   },
 ];
 
@@ -191,12 +219,23 @@ const fetchCameras = unstable_cache(
         
         // Find matching metadata from dictionary
         const titleLower = title.toLowerCase();
-        const meta = LOCATION_DICTIONARY.find(m => 
+        let meta = LOCATION_DICTIONARY.find(m => 
           m.keywords.some(k => titleLower.includes(k))
-        ) || DEFAULT_META;
+        );
 
-        // Spread the coordinate to avoid readonly tuple issues, though typescript should infer it
-        const coords: [number, number] = [meta.coordinates[0], meta.coordinates[1]];
+        // If no match, scatter them slightly off the US West Coast instead of Null Island
+        // so they don't perfectly overlap and the user can see them.
+        let coords: [number, number];
+        if (meta) {
+          coords = [meta.coordinates[0], meta.coordinates[1]];
+        } else {
+          meta = DEFAULT_META;
+          // Hash the videoId to generate a stable pseudo-random offset
+          const hash = videoId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const offsetX = (hash % 20) - 10;
+          const offsetY = ((hash * 3) % 10) - 5;
+          coords = [-130 + offsetX, 35 + offsetY]; // Scattered in the Pacific Ocean
+        }
 
         return {
           id: `cam-${videoId}`,
@@ -221,7 +260,7 @@ const fetchCameras = unstable_cache(
       return SEED_CAMERAS;
     }
   },
-  ["explore-org-cameras-api"],
+  ["explore-org-cameras-api-v4"],
   { revalidate: 900, tags: ["cameras"] } // Revalidate every 15 mins to catch new streams
 );
 
