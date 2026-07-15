@@ -25,6 +25,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
   const { shoot } = useDanmaku(danmakuRef);
   const [embedError, setEmbedError] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showDanmaku, setShowDanmaku] = useState(false);
 
   const handleMessages = useCallback(
     (msgs: LiveChatMessage[]) => msgs.forEach((m) => shoot(m)),
@@ -33,7 +34,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
 
   useYtChat(camera.youtubeVideoId, {
     onMessages: handleMessages,
-    enabled: camera.isLive && !embedError,
+    enabled: camera.isLive && !embedError && showDanmaku,
   });
 
   const meta = CATEGORY_META[camera.category];
@@ -74,6 +75,13 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
             LIVE
           </span>
         )}
+        <button
+          onClick={() => setShowDanmaku((v) => !v)}
+          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${showDanmaku ? "bg-cyan-500/20 text-cyan-400" : "bg-neutral-800 text-neutral-500"}`}
+          title="Toggle Chat Danmaku"
+        >
+          💬 {showDanmaku ? "ON" : "OFF"}
+        </button>
         <button
           id={`minimize-video-${camera.id}`}
           onClick={() => setIsMinimized((v) => !v)}
@@ -123,7 +131,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
                 onError={() => setEmbedError(true)}
               />
               {/* Danmaku overlay */}
-              <div ref={danmakuRef} className="danmaku-container" aria-hidden />
+              {showDanmaku && <div ref={danmakuRef} className="danmaku-container" aria-hidden />}
             </>
           )}
         </div>
