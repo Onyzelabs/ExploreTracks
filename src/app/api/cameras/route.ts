@@ -152,6 +152,69 @@ const LOCATION_DICTIONARY: LocationMeta[] = [
     category: "birds",
   },
   {
+    keywords: ["utopia village", "reef cam"],
+    location: "Roatán, Honduras",
+    country: "Honduras",
+    coordinates: [-86.5222, 16.3319],
+    category: "marine",
+  },
+  {
+    keywords: ["gorilla", "grace"],
+    location: "GRACE Center, North Kivu",
+    country: "DR Congo",
+    coordinates: [29.131, -0.065],
+    category: "mammals",
+  },
+  {
+    keywords: ["mendenhall", "glacier", "mountain goat"],
+    location: "Juneau, Alaska",
+    country: "United States",
+    coordinates: [-134.546, 58.428],
+    category: "mammals",
+  },
+  {
+    keywords: ["walrus", "round island"],
+    location: "Round Island, Alaska",
+    country: "United States",
+    coordinates: [-159.972, 58.604],
+    category: "marine",
+  },
+  {
+    keywords: ["hummingbird", "canopy tower", "soberanía"],
+    location: "Soberanía National Park",
+    country: "Panama",
+    coordinates: [-79.646, 9.079],
+    category: "birds",
+  },
+  {
+    keywords: ["banzai pipeline", "oahu", "surf"],
+    location: "North Shore, Hawaii",
+    country: "United States",
+    coordinates: [-158.053, 21.664],
+    category: "general",
+  },
+  {
+    keywords: ["orcalab", "orca"],
+    location: "Hanson Island, BC",
+    country: "Canada",
+    coordinates: [-126.715, 50.543],
+    category: "marine",
+  },
+  {
+    keywords: ["owl", "owl research institute"],
+    location: "Montana / Oregon",
+    country: "United States",
+    coordinates: [-114.0, 46.0],
+    category: "birds",
+  },
+  {
+    keywords: ["farm sanctuary", "sheep"],
+    location: "Watkins Glen, NY",
+    country: "United States",
+    coordinates: [-76.884, 42.368],
+    category: "mammals",
+  },
+  {
     keywords: ["dog", "puppy", "service dog", "warrior canine", "ecad"],
     location: "Various Locations",
     country: "United States",
@@ -342,7 +405,7 @@ const fetchCameras = unstable_cache(
       return SEED_CAMERAS;
     }
   },
-  ["explore-cameras-v9"],
+  ["explore-cameras-v10"],
   { revalidate: 3600, tags: ["cameras"] }, // Revalidate every 60 mins to save Search Quota
 );
 
