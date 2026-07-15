@@ -11,14 +11,23 @@
  */
 
 import { unstable_cache } from "next/cache";
-import type { ExploreCamera } from "@/lib/types";
+import type { ExploreCamera, CameraCategory } from "@/lib/types";
 import { ExploreCameraSchema } from "@/lib/types";
 import { withErrorHandler } from "@/lib/api-utils";
 import exploreChannels from "@/data/explore-channels.json";
 
 // ─── Known Locations Dictionary ─────────────────────────────────────────────
 // Maps keywords in YouTube titles to GPS coordinates and categories.
-const LOCATION_DICTIONARY = [
+
+interface LocationMeta {
+  keywords: string[];
+  location: string;
+  country: string;
+  coordinates: [number, number];
+  category: CameraCategory;
+}
+
+const LOCATION_DICTIONARY: LocationMeta[] = [
   {
     keywords: ["katmai", "brooks falls", "river watch", "riffles"],
     location: "Katmai National Park, Alaska",
@@ -159,11 +168,12 @@ const LOCATION_DICTIONARY = [
 ];
 
 // Fallback metadata if a stream title doesn't match the dictionary
-const DEFAULT_META = {
+const DEFAULT_META: LocationMeta = {
+  keywords: [],
   location: "Explore.org Global Network",
   country: "Unknown",
-  coordinates: [0, 0] as [number, number],
-  category: "general" as const,
+  coordinates: [0, 0],
+  category: "general",
 };
 
 // ─── Curated seed data (Fallback) ─────────────────────────────────────────────
@@ -174,13 +184,13 @@ const SEED_CAMERAS: ExploreCamera[] = [
     name: "Katmai Brown Bear Cam",
     location: "Katmai National Park, Alaska",
     country: "United States",
-    coordinates: [-155.0547, 58.4596],
+    coordinates: [-155.0547, 58.4596] as [number, number],
     youtubeVideoId: "J7ZrIDvqlic",
     embedUrl:
       "https://www.youtube.com/embed/J7ZrIDvqlic?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/J7ZrIDvqlic/maxresdefault.jpg",
     isLive: true,
-    category: "bears",
+    category: "bears" as CameraCategory,
     description: "Watch brown bears catching sockeye salmon at Brooks Falls.",
   },
   {
@@ -188,13 +198,13 @@ const SEED_CAMERAS: ExploreCamera[] = [
     name: "Decorah Eagles Nest Cam",
     location: "Decorah, Iowa",
     country: "United States",
-    coordinates: [-91.7854, 43.3017],
+    coordinates: [-91.7854, 43.3017] as [number, number],
     youtubeVideoId: "GGIE1E-kaMQ",
     embedUrl:
       "https://www.youtube.com/embed/GGIE1E-kaMQ?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/GGIE1E-kaMQ/maxresdefault.jpg",
     isLive: true,
-    category: "birds",
+    category: "birds" as CameraCategory,
     description: "Bald eagle nest cam in Decorah, Iowa.",
   },
   {
@@ -202,13 +212,13 @@ const SEED_CAMERAS: ExploreCamera[] = [
     name: "Underwater Manatee Cam",
     location: "Homosassa Springs, Florida",
     country: "United States",
-    coordinates: [-82.5765, 28.8],
+    coordinates: [-82.5765, 28.8] as [number, number],
     youtubeVideoId: "Fz6sl9YJZE0",
     embedUrl:
       "https://www.youtube.com/embed/Fz6sl9YJZE0?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/Fz6sl9YJZE0/maxresdefault.jpg",
     isLive: true,
-    category: "marine",
+    category: "marine" as CameraCategory,
     description: "Watch the beloved sea cows swimming underwater in Florida.",
   },
   {
@@ -216,13 +226,13 @@ const SEED_CAMERAS: ExploreCamera[] = [
     name: "Tropical Reef Camera",
     location: "Aquarium of the Pacific, CA",
     country: "United States",
-    coordinates: [-118.1937, 33.7621],
+    coordinates: [-118.1937, 33.7621] as [number, number],
     youtubeVideoId: "DHUnz4dyb54",
     embedUrl:
       "https://www.youtube.com/embed/DHUnz4dyb54?autoplay=1&rel=0&modestbranding=1&enablejsapi=1",
     thumbnail: "https://img.youtube.com/vi/DHUnz4dyb54/maxresdefault.jpg",
     isLive: true,
-    category: "marine",
+    category: "marine" as CameraCategory,
     description: "Beautiful tropical reef habitat featuring colorful fish.",
   },
 ].filter((c) => ExploreCameraSchema.safeParse(c).success);
@@ -279,7 +289,7 @@ const fetchCameras = unstable_cache(
         // so they don't perfectly overlap and the user can see them.
         const hash = videoId
           .split("")
-          .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
 
         let coords: [number, number];
         if (meta) {

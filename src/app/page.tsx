@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import type { SidebarContent, FilterState, ExploreCamera } from "@/lib/types";
+import type { SidebarContent, FilterState, ExploreCamera, OpenVideoPanel } from "@/lib/types";
 import { DEFAULT_FILTER, CATEGORY_META, ANIMAL_TYPE_META } from "@/lib/types";
 import { useCameras, useTracks } from "@/lib/hooks";
 import AnimalInfo from "@/components/Sidebar/AnimalInfo";

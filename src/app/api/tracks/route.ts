@@ -435,10 +435,10 @@ function groupEventsIntoTracks(
     // Sort by timestamp
     const sorted = evts
       .map((e) => ({
-        longitude: parseFloat(e.location_long),
-        latitude: parseFloat(e.location_lat),
+        longitude: e.location_long,
+        latitude: e.location_lat,
         timestamp: new Date(e.timestamp).getTime(),
-        speed: e.ground_speed ? parseFloat(e.ground_speed) : undefined,
+        speed: e.ground_speed,
       }))
       .filter(
         (e) => !isNaN(e.longitude) && !isNaN(e.latitude) && !isNaN(e.timestamp),

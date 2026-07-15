@@ -45,6 +45,14 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
     });
   }, [onChange]);
 
+  const clearAll = useCallback(() => {
+    onChange({
+      cameraCategories: new Set(),
+      animalTypes: new Set(),
+      searchText: "",
+    });
+  }, [onChange]);
+
   const activeCount =
     Object.keys(CATEGORY_META).length -
     filter.cameraCategories.size +
@@ -92,15 +100,21 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
             >
               Data Sources
             </span>
-            {activeCount > 0 && (
+            <div className="flex gap-3">
+              <button
+                onClick={clearAll}
+                className="text-xs text-neutral-400 hover:text-white transition-colors"
+              >
+                Clear all
+              </button>
               <button
                 id="filter-reset-btn"
                 onClick={resetAll}
-                className="text-[11px] text-orange-400 hover:text-orange-300 transition-colors"
+                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
               >
-                Reset all
+                Select all
               </button>
-            )}
+            </div>
           </div>
 
           {/* Search Input */}

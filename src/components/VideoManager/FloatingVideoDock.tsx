@@ -191,8 +191,7 @@ export default function FloatingVideoDock({
   const getInitialLayout = (slot: number, total: number) => {
     // Determine a responsive width based on screen size
     const isMobile = window.innerWidth < 768;
-    const baseWidth =
-      total === 1 ? (isMobile ? 300 : 420) : isMobile ? 260 : 320;
+    const baseWidth = isMobile ? 260 : 320;
     const height = baseWidth * 0.5625 + 40; // 16:9 ratio + header height
 
     const paddingX = 16;
@@ -255,4 +254,3 @@ export default function FloatingVideoDock({
   );
 }
 
-export { MAX_PANELS };
