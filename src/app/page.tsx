@@ -66,6 +66,7 @@ export default function Home() {
   const [mapStyle, setMapStyle] = useState<string>(
     "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   );
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const { cameras, isLoading: camLoading, error: camError } = useCameras();
   const { tracks, isLoading: trackLoading, error: trackError } = useTracks();
@@ -108,144 +109,137 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Top Nav ─────────────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 h-13 flex items-center px-4 gap-3 border-b border-[var(--glass-border)] bg-[var(--color-surface-900)] z-20">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          {/* Inline SVG logo mark */}
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 28 28"
-            fill="none"
-            aria-hidden
-          >
-            <rect width="28" height="28" rx="8" fill="url(#logo-grad)" />
-            <path
-              d="M7 19 Q11 9 17 13 Q21 16 22 10"
-              stroke="#fff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.9"
-            />
-            <circle cx="22" cy="10" r="2.5" fill="#fff" opacity="0.95" />
-            <circle cx="7" cy="19" r="2" fill="#fff" opacity="0.6" />
-            <defs>
-              <linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28">
-                <stop offset="0%" stopColor="#f97316" />
-                <stop offset="100%" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span
-            className="text-xl font-bold tracking-tight text-neutral-100"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            Explore
-            <span style={{ color: "var(--color-brand-primary)" }}>Tracks</span>
-          </span>
+      <header className="flex-shrink-0 flex flex-col border-b border-[var(--glass-border)] bg-[var(--color-surface-900)] z-20">
+        {/* Primary row */}
+        <div className="flex items-center px-4 gap-3 h-[52px]">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+              <rect width="28" height="28" rx="8" fill="url(#logo-grad)" />
+              <path d="M7 19 Q11 9 17 13 Q21 16 22 10" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.9" />
+              <circle cx="22" cy="10" r="2.5" fill="#fff" opacity="0.95" />
+              <circle cx="7" cy="19" r="2" fill="#fff" opacity="0.6" />
+              <defs>
+                <linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28">
+                  <stop offset="0%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#f59e0b" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="text-xl font-bold tracking-tight text-neutral-100" style={{ fontFamily: "var(--font-sans)" }}>
+              Explore<span style={{ color: "var(--color-brand-primary)" }}>Tracks</span>
+            </span>
+          </div>
+
+          <div className="w-px h-5 bg-white/10 flex-shrink-0" />
+
+          {/* Filter — always visible */}
+          <FilterPanel filter={filter} onChange={setFilter} />
+
+          {/* Stats — hidden on mobile */}
+          <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-neutral-300" style={{ fontFamily: "var(--font-sans)" }}>
+            <div className="w-px h-5 bg-white/10" />
+            <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
+              <span className="text-base">📷</span>
+              <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
+              <span className="text-base">🐾</span>
+              <span><CountBadge count={tracks?.length} isLoading={trackLoading} error={trackError} /> tracks</span>
+            </div>
+            {openVideos.length > 0 && (
+              <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-md border border-orange-500/20">
+                <span className="text-orange-400 text-sm">▶ {openVideos.length}/{MAX_OPEN_VIDEOS} open</span>
+                <button
+                  onClick={() => setOpenVideos([])}
+                  className="ml-1 text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/40 hover:text-white transition-colors"
+                >
+                  Close All
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right-side controls */}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Errors */}
+            {(camError || trackError) && (
+              <div className="hidden sm:flex gap-2">
+                {camError && <ErrorBanner label="Cameras" error={camError} />}
+                {trackError && <ErrorBanner label="Tracks" error={trackError} />}
+              </div>
+            )}
+
+            {/* Map style — hidden on mobile (moved to menu) */}
+            <select
+              value={mapStyle}
+              onChange={(e) => setMapStyle(e.target.value)}
+              className="hidden sm:block text-sm px-3 py-1.5 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none focus:border-orange-500"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Map</option>
+              <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
+              <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
+              <option value="satellite">Satellite</option>
+            </select>
+
+            {/* External links — hidden on mobile */}
+            <a href="https://explore.org" target="_blank" rel="noopener noreferrer" id="nav-explore-link"
+              className="hidden sm:inline-flex text-sm px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors font-medium"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              explore.org
+            </a>
+            <a href="https://www.movebank.org" target="_blank" rel="noopener noreferrer" id="nav-movebank-link"
+              className="hidden sm:inline-flex text-sm px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors font-medium"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              Movebank
+            </a>
+
+            {/* Mobile hamburger */}
+            <button
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300"
+              onClick={() => setShowMobileMenu((v) => !v)}
+              aria-label="Menu"
+            >
+              {showMobileMenu ? "✕" : "☰"}
+            </button>
+          </div>
         </div>
 
-        <div className="w-px h-5 bg-white/10 flex-shrink-0" />
-
-        {/* Filter panel */}
-        <FilterPanel filter={filter} onChange={setFilter} />
-
-        <div className="w-px h-5 bg-white/10 flex-shrink-0" />
-
-        {/* Stats */}
-        <div
-          className="flex items-center gap-4 text-sm font-medium text-neutral-300"
-          style={{ fontFamily: "var(--font-sans)" }}
-        >
-          <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
-            <span className="text-base">📷</span>
-            <span>
-              <CountBadge
-                count={cameras?.length}
-                isLoading={camLoading}
-                error={camError}
-              />{" "}
-              cams
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
-            <span className="text-base">🐾</span>
-            <span>
-              <CountBadge
-                count={tracks?.length}
-                isLoading={trackLoading}
-                error={trackError}
-              />{" "}
-              tracks
-            </span>
-          </div>
-          {openVideos.length > 0 && (
-            <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-md border border-orange-500/20">
-              <span className="text-orange-400 text-sm">
-                ▶ {openVideos.length}/{MAX_OPEN_VIDEOS} open
-              </span>
+        {/* Mobile dropdown menu */}
+        {showMobileMenu && (
+          <div className="sm:hidden flex flex-col gap-3 px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--color-surface-950)]">
+            <select
+              value={mapStyle}
+              onChange={(e) => { setMapStyle(e.target.value); setShowMobileMenu(false); }}
+              className="w-full text-sm px-3 py-2 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Map</option>
+              <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
+              <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
+              <option value="satellite">Satellite</option>
+            </select>
+            {openVideos.length > 0 && (
               <button
-                onClick={() => setOpenVideos([])}
-                className="ml-1 text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/40 hover:text-white transition-colors"
-                title="Close all videos"
+                onClick={() => { setOpenVideos([]); setShowMobileMenu(false); }}
+                className="w-full text-sm py-2 rounded-md bg-red-500/20 text-red-300 border border-red-500/20"
               >
-                Close All
+                Close All Videos ({openVideos.length})
               </button>
-            </div>
-          )}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {(camError || trackError) && (
+            )}
             <div className="flex gap-2">
-              {camError && <ErrorBanner label="Cameras" error={camError} />}
-              {trackError && <ErrorBanner label="Tracks" error={trackError} />}
+              <a href="https://explore.org" target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center text-sm py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400"
+              >explore.org</a>
+              <a href="https://www.movebank.org" target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center text-sm py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"
+              >Movebank</a>
             </div>
-          )}
-
-          <select
-            value={mapStyle}
-            onChange={(e) => setMapStyle(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none focus:border-orange-500"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">
-              Dark Map
-            </option>
-            <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">
-              Light Map
-            </option>
-            <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">
-              Light Map
-            </option>
-            <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">
-              Positron
-            </option>
-            <option value="satellite">Satellite</option>
-          </select>
-
-          <a
-            href="https://explore.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            id="nav-explore-link"
-            className="text-sm px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors font-medium"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            explore.org
-          </a>
-          <a
-            href="https://www.movebank.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            id="nav-movebank-link"
-            className="text-sm px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors font-medium"
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            Movebank
-          </a>
-        </div>
+          </div>
+        )}
       </header>
 
       {/* ── Global Real-time Chat ──────────────────────────────────────── */}
@@ -294,7 +288,7 @@ export default function Home() {
         {sidebarContent?.type === "animal" && (
           <aside
             id="animal-sidebar"
-            className="flex-shrink-0 w-[340px] h-full z-10 anim-slide-right overflow-hidden"
+            className="absolute sm:relative right-0 flex-shrink-0 w-full sm:w-[340px] h-full z-30 sm:z-10 anim-slide-right overflow-hidden shadow-2xl sm:shadow-none bg-[var(--color-surface-900)]"
           >
             <AnimalInfo
               track={sidebarContent.track}

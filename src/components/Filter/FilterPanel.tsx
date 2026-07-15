@@ -89,7 +89,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
       {/* Dropdown panel */}
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-2 w-72 glass-card p-4 z-50 anim-slide-up shadow-2xl"
+          className="absolute top-full left-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-72 glass-card p-4 z-50 anim-slide-up shadow-2xl"
           id="filter-dropdown"
         >
           {/* Header */}
