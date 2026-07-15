@@ -68,16 +68,20 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
         <button
           id={`close-animal-panel-${track.id}`}
           onClick={onClose}
-          className="flex-shrink-0 ml-2 w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors"
+          className="flex-shrink-0 ml-2 w-10 h-10 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors"
           aria-label="Close panel"
         >
           ✕
         </button>
       </div>
 
-      {/* Telemetry Notice */}
-      <div className="px-4 pt-4">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-4">
+      {/* Scrollable body: notice + image + stats + details */}
+      <div
+        className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8 space-y-4"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+      >
+        {/* Telemetry Notice */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mt-4">
           <span>📡</span>
           <span>
             <b>Telemetry Data Only:</b> This is GPS tracking data from Movebank,
@@ -86,7 +90,7 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
         </div>
 
         {imageUrl && (
-          <div className="w-full h-40 rounded-xl overflow-hidden mb-4 border border-[var(--glass-border)] bg-black">
+          <div className="w-full h-40 rounded-xl overflow-hidden border border-[var(--glass-border)] bg-black">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
@@ -95,35 +99,24 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
             />
           </div>
         )}
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 p-4">
-        <StatCard
-          label="Track Points"
-          value={track.coordinates.length.toString()}
-        />
-        <StatCard label="Distance" value={`~${distKm.toFixed(0)} km`} />
-        <StatCard label="Start Date" value={startDate} />
-        <StatCard label="Latest Fix" value={endDate} />
-      </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard label="Track Points" value={track.coordinates.length.toString()} />
+          <StatCard label="Distance" value={`~${distKm.toFixed(0)} km`} />
+          <StatCard label="Start Date" value={startDate} />
+          <StatCard label="Latest Fix" value={endDate} />
+        </div>
 
-      {/* Details */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+        {/* Details */}
         <div>
-          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
-            Species
-          </p>
-          <p className="text-base text-neutral-200 font-medium">
-            {track.commonName}
-          </p>
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">Species</p>
+          <p className="text-base text-neutral-200 font-medium">{track.commonName}</p>
           <p className="text-sm text-neutral-500 italic">{track.species}</p>
         </div>
 
         <div>
-          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">
-            Study
-          </p>
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-1">Study</p>
           <p className="text-base text-neutral-300">{track.studyName}</p>
         </div>
 
@@ -140,9 +133,7 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
         )}
 
         <div>
-          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-2">
-            Tags
-          </p>
+          <p className="text-sm text-neutral-500 uppercase tracking-wider mb-2">Tags</p>
           <div className="flex flex-wrap gap-2">
             {track.tags.map((tag) => (
               <span
