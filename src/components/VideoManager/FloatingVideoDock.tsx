@@ -39,11 +39,9 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
 
   const meta = CATEGORY_META[camera.category];
 
-  // Build a properly-scoped embed URL
   const embedUrl = [
     `https://www.youtube.com/embed/${camera.youtubeVideoId}`,
     "?autoplay=1",
-    "&mute=1",
     "&rel=0",
     "&modestbranding=1",
     "&enablejsapi=1",
