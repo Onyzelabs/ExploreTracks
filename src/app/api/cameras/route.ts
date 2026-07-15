@@ -253,23 +253,19 @@ const fetchCameras = unstable_cache(
     }
 
     try {
-      // Fetch live streams from all known explore.org channels concurrently
-      const promises = exploreChannels.map((channel) =>
-        fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channel.id}&eventType=live&type=video&maxResults=20&key=${API_KEY}`,
-        )
-          .then((res) => (res.ok ? res.json() : null))
-          .catch(() => null),
+      // Fetch live streams using a single keyword search to save YouTube API Quota
+      // (The search endpoint costs 100 quota points per call. Mapping over 7 channels
+      // would cost 700 points. A single query costs only 100 points).
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q="explore.org"&eventType=live&type=video&maxResults=50&key=${API_KEY}`,
       );
-
-      const results = await Promise.all(promises);
-
+      
+      const data = res.ok ? await res.json() : null;
       let allItems: any[] = [];
-      results.forEach((data) => {
-        if (data && data.items && Array.isArray(data.items)) {
-          allItems = allItems.concat(data.items);
-        }
-      });
+      
+      if (data && data.items && Array.isArray(data.items)) {
+        allItems = data.items;
+      }
 
       if (allItems.length === 0) {
         return SEED_CAMERAS; // Fallback
