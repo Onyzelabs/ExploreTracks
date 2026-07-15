@@ -13,11 +13,145 @@
 
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
-import type { AnimalTrack, TrackPoint } from "@/lib/types";
+import type { AnimalTrack, AnimalType } from "@/lib/types";
 import { AnimalTrackSchema } from "@/lib/types";
 import { ApiError, requireEnv, withErrorHandler } from "@/lib/api-utils";
 
+/**
+ * Infer animal type from species/taxon name for filter categorization.
+ */
+function inferAnimalType(species: string): AnimalType {
+  const s = species.toLowerCase();
+  if (/aves|accipiter|pandion|aquila|haliaeetus|grus|ciconia|anser|falco|strix/.test(s)) return "bird";
+  if (/cetacea|megaptera|balaenoptera|delphin|orca|physeter/.test(s)) return "marine_mammal";
+  if (/carcharodon|isurus|sphyrna|rhincodon|shark|thunnus|gadus|anguilla/.test(s)) return "fish";
+  if (/ursus|ailuropoda/.test(s)) return "bear";
+  if (/reptilia|testudines|caretta|chelonia|crocodyl|iguana|varanus/.test(s)) return "reptile";
+  if (/lepidoptera|apis|bombus|danaus/.test(s)) return "insect";
+  if (/mammalia|loxodonta|panthera|acinonyx|equus|cervus|alces|canis|vulpes|odocoileus|rangifer/.test(s)) return "mammal";
+  return "unknown";
+}
+
 const MOVEBANK_BASE = "https://www.movebank.org/movebank/service/direct-read";
+
+// ─── Development seed data ────────────────────────────────────────────────────
+// Used when MOVEBANK_USERNAME / MOVEBANK_STUDY_IDS env vars are not configured.
+const SEED_TRACKS: AnimalTrack[] = [
+  {
+    id: "seed-osprey-oskar",
+    individualName: "Oskar",
+    species: "Pandion haliaetus",
+    commonName: "Osprey",
+    studyId: 0,
+    studyName: "Osprey Migration Europe (seed)",
+    color: "#a3e635",
+    animalType: "bird",
+    tags: ["raptor", "migratory", "Europe"],
+    currentPosition: [13.405, 52.52],
+    coordinates: [
+      { longitude: -7.0,  latitude: 36.0, timestamp: 1700000000000 },
+      { longitude:  0.5,  latitude: 40.5, timestamp: 1700200000000 },
+      { longitude:  5.1,  latitude: 44.8, timestamp: 1700400000000 },
+      { longitude:  9.2,  latitude: 47.9, timestamp: 1700600000000 },
+      { longitude: 13.4,  latitude: 52.5, timestamp: 1700800000000 },
+    ],
+  },
+  {
+    id: "seed-elephant-amara",
+    individualName: "Amara",
+    species: "Loxodonta africana",
+    commonName: "African Elephant",
+    studyId: 0,
+    studyName: "Savanna Elephant Tracking (seed)",
+    color: "#f97316",
+    animalType: "mammal",
+    tags: ["megafauna", "Africa", "endangered"],
+    currentPosition: [35.2, -1.9],
+    coordinates: [
+      { longitude: 32.5, latitude: -0.5, timestamp: 1700000000000 },
+      { longitude: 33.1, latitude: -0.9, timestamp: 1700200000000 },
+      { longitude: 33.8, latitude: -1.3, timestamp: 1700400000000 },
+      { longitude: 34.5, latitude: -1.6, timestamp: 1700600000000 },
+      { longitude: 35.2, latitude: -1.9, timestamp: 1700800000000 },
+    ],
+  },
+  {
+    id: "seed-shark-neptune",
+    individualName: "Neptune",
+    species: "Carcharodon carcharias",
+    commonName: "Great White Shark",
+    studyId: 0,
+    studyName: "OCEARCH Pacific Shark Tracking (seed)",
+    color: "#06b6d4",
+    animalType: "fish",
+    tags: ["marine", "apex predator", "Pacific"],
+    currentPosition: [-140.0, 28.0],
+    coordinates: [
+      { longitude: -118.5, latitude: 34.0, timestamp: 1700000000000 },
+      { longitude: -122.0, latitude: 32.0, timestamp: 1700200000000 },
+      { longitude: -128.0, latitude: 30.5, timestamp: 1700400000000 },
+      { longitude: -135.0, latitude: 29.0, timestamp: 1700600000000 },
+      { longitude: -140.0, latitude: 28.0, timestamp: 1700800000000 },
+    ],
+  },
+  {
+    id: "seed-polarbear-nanuq",
+    individualName: "Nanuq",
+    species: "Ursus maritimus",
+    commonName: "Polar Bear",
+    studyId: 0,
+    studyName: "Hudson Bay Polar Bear Tracking (seed)",
+    color: "#e0f2fe",
+    animalType: "bear",
+    tags: ["arctic", "endangered", "sea ice"],
+    currentPosition: [-94.17, 60.5],
+    coordinates: [
+      { longitude: -94.2, latitude: 58.7, timestamp: 1700000000000 },
+      { longitude: -94.5, latitude: 59.1, timestamp: 1700200000000 },
+      { longitude: -94.3, latitude: 59.6, timestamp: 1700400000000 },
+      { longitude: -94.0, latitude: 60.0, timestamp: 1700600000000 },
+      { longitude: -94.2, latitude: 60.5, timestamp: 1700800000000 },
+    ],
+  },
+  {
+    id: "seed-albatross-wanderer",
+    individualName: "Wanderer",
+    species: "Diomedea exulans",
+    commonName: "Wandering Albatross",
+    studyId: 0,
+    studyName: "Southern Ocean Albatross Tracking (seed)",
+    color: "#e879f9",
+    animalType: "bird",
+    tags: ["seabird", "Southern Ocean", "long-range"],
+    currentPosition: [60.0, -45.0],
+    coordinates: [
+      { longitude:  0.0, latitude: -55.0, timestamp: 1700000000000 },
+      { longitude: 20.0, latitude: -50.0, timestamp: 1700200000000 },
+      { longitude: 40.0, latitude: -47.0, timestamp: 1700400000000 },
+      { longitude: 55.0, latitude: -44.0, timestamp: 1700600000000 },
+      { longitude: 60.0, latitude: -45.0, timestamp: 1700800000000 },
+    ],
+  },
+  {
+    id: "seed-turtle-maya",
+    individualName: "Maya",
+    species: "Caretta caretta",
+    commonName: "Loggerhead Sea Turtle",
+    studyId: 0,
+    studyName: "Mediterranean Turtle Migration (seed)",
+    color: "#34d399",
+    animalType: "reptile",
+    tags: ["sea turtle", "Mediterranean", "endangered"],
+    currentPosition: [18.0, 37.0],
+    coordinates: [
+      { longitude: 28.0, latitude: 36.5, timestamp: 1700000000000 },
+      { longitude: 24.0, latitude: 36.8, timestamp: 1700200000000 },
+      { longitude: 20.0, latitude: 37.0, timestamp: 1700400000000 },
+      { longitude: 18.0, latitude: 37.0, timestamp: 1700600000000 },
+    ],
+  },
+];
+
 
 // Movebank event (GPS fix) shape from the API
 const MovebankEventSchema = z.object({
@@ -189,6 +323,7 @@ function groupEventsIntoTracks(
       studyId,
       studyName,
       color: getColor(colorOffset + i),
+      animalType: inferAnimalType(species),
       coordinates: sorted,
       currentPosition: [last.longitude, last.latitude] as [number, number],
       tags: [species],
@@ -208,6 +343,13 @@ function groupEventsIntoTracks(
  */
 const fetchAllTracks = unstable_cache(
   async (): Promise<AnimalTrack[]> => {
+    // If Movebank credentials are not configured, return seed data for development.
+    // This allows the app to function without credentials during local development.
+    if (!process.env.MOVEBANK_USERNAME || !process.env.MOVEBANK_STUDY_IDS) {
+      console.warn("[/api/tracks] Movebank env vars not set — returning seed data.");
+      return SEED_TRACKS;
+    }
+
     const studyIdsRaw = requireEnv("MOVEBANK_STUDY_IDS");
     const studyIds = studyIdsRaw
       .split(",")

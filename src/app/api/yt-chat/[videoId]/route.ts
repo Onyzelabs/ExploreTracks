@@ -152,6 +152,15 @@ export const GET = withErrorHandler(async (req, ctx) => {
     throw new ApiError("Invalid YouTube video ID format.", 400, "INVALID_VIDEO_ID");
   }
 
+  // If API key is not configured (e.g. local dev without credentials), return
+  // an empty response with a long polling interval instead of crashing with 500.
+  if (!process.env.YOUTUBE_API_KEY) {
+    return Response.json({
+      success: true,
+      data: { messages: [], pollingIntervalMillis: 60000, isLive: false, unconfigured: true },
+    });
+  }
+
   const apiKey = requireEnv("YOUTUBE_API_KEY");
   const { searchParams } = new URL(req.url);
   const pageToken = searchParams.get("pageToken") ?? undefined;
