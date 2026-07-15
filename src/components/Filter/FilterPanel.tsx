@@ -113,7 +113,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Camera categories */}
-          <p className="text-[10px] text-orange-400 uppercase tracking-wider mb-2 font-semibold" style={{ fontFamily: "var(--font-sans)" }}>
+          <p className="text-xs text-orange-400 uppercase tracking-wider mb-2 font-semibold" style={{ fontFamily: "var(--font-sans)" }}>
             Explore.org Live Cameras (Video)
           </p>
           <div className="flex flex-wrap gap-1.5 mb-4">
@@ -141,7 +141,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Animal track types */}
-          <p className="text-[10px] text-cyan-400 uppercase tracking-wider mb-2 font-semibold mt-4" style={{ fontFamily: "var(--font-sans)" }}>
+          <p className="text-xs text-cyan-400 uppercase tracking-wider mb-2 font-semibold mt-4" style={{ fontFamily: "var(--font-sans)" }}>
             Movebank Tracks (Telemetry, No Video)
           </p>
           <div className="flex flex-wrap gap-1.5">

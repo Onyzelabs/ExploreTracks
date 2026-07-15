@@ -63,7 +63,7 @@ function FloatingVideoPanel({ camera, slot, totalOpen, onClose }: FloatingVideoP
       >
         <span className="text-base leading-none">{meta.emoji}</span>
         <span
-          className="text-xs font-semibold truncate flex-1"
+          className="text-sm font-bold truncate flex-1"
           style={{ fontFamily: "var(--font-sans)", color: meta.color }}
         >
           {camera.name}
