@@ -405,7 +405,7 @@ const fetchCameras = unstable_cache(
       return SEED_CAMERAS;
     }
   },
-  ["explore-cameras-v10"],
+  ["explore-cameras-v11"],
   { revalidate: 3600, tags: ["cameras"] }, // Revalidate every 60 mins to save Search Quota
 );
 
