@@ -336,7 +336,7 @@ const fetchCameras = unstable_cache(
     }
   },
   ["explore-cameras-v8"],
-  { revalidate: 900, tags: ["cameras"] }, // Revalidate every 15 mins to catch new streams
+  { revalidate: 3600, tags: ["cameras"] }, // Revalidate every 60 mins to save Search Quota
 );
 
 export const GET = withErrorHandler(async () => {
