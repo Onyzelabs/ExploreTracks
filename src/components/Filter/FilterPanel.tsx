@@ -54,7 +54,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
         id="filter-toggle-btn"
         onClick={() => setIsOpen((v) => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg glass-card-sm text-xs font-medium text-neutral-300 hover:text-white transition-colors"
-        style={{ fontFamily: "var(--font-heading)" }}
+        style={{ fontFamily: "var(--font-sans)" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -75,7 +75,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-heading)" }}>
+            <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-sans)" }}>
               Filters
             </span>
             {activeCount > 0 && (
@@ -113,7 +113,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Camera categories */}
-          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-sans)" }}>
             📷 Live Cameras
           </p>
           <div className="flex flex-wrap gap-1.5 mb-4">
@@ -141,7 +141,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
           </div>
 
           {/* Animal track types */}
-          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+          <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-sans)" }}>
             🐾 Animal Tracks
           </p>
           <div className="flex flex-wrap gap-1.5">

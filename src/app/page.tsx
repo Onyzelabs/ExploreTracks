@@ -97,7 +97,7 @@ export default function Home() {
           </svg>
           <span
             className="text-base font-bold tracking-tight text-neutral-100"
-            style={{ fontFamily: "var(--font-heading)" }}
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             Explore<span style={{ color: "var(--color-brand-primary)" }}>Tracks</span>
           </span>
@@ -111,7 +111,7 @@ export default function Home() {
         <div className="w-px h-5 bg-white/10 flex-shrink-0" />
 
         {/* Live counts */}
-        <div className="flex items-center gap-3 text-xs text-neutral-500" style={{ fontFamily: "var(--font-body)" }}>
+        <div className="flex items-center gap-3 text-xs text-neutral-500" style={{ fontFamily: "var(--font-sans)" }}>
           <span>
             📷 <CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams
           </span>
@@ -136,7 +136,7 @@ export default function Home() {
             href="https://explore.org" target="_blank" rel="noopener noreferrer"
             id="nav-explore-link"
             className="text-[11px] px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors"
-            style={{ fontFamily: "var(--font-heading)" }}
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             explore.org
           </a>
@@ -144,7 +144,7 @@ export default function Home() {
             href="https://www.movebank.org" target="_blank" rel="noopener noreferrer"
             id="nav-movebank-link"
             className="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
-            style={{ fontFamily: "var(--font-heading)" }}
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             Movebank
           </a>
@@ -175,7 +175,7 @@ export default function Home() {
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none anim-fade-in">
               <div className="glass-card-sm px-4 py-2 text-xs text-neutral-400 flex items-center gap-2">
                 <span>📷</span>
-                <span style={{ fontFamily: "var(--font-body)" }}>
+                <span style={{ fontFamily: "var(--font-sans)" }}>
                   Click a camera icon on the map to open a live stream
                 </span>
               </div>
@@ -193,10 +193,10 @@ export default function Home() {
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="flex-shrink-0 h-6 flex items-center justify-between px-4 border-t border-[var(--glass-border)] bg-[var(--color-surface-950)]">
-        <span className="text-[10px] text-neutral-700" style={{ fontFamily: "var(--font-body)" }}>
+        <span className="text-[10px] text-neutral-700" style={{ fontFamily: "var(--font-sans)" }}>
           Map © OpenStreetMap · Stadia Maps
         </span>
-        <span className="text-[10px] text-neutral-700" style={{ fontFamily: "var(--font-body)" }}>
+        <span className="text-[10px] text-neutral-700" style={{ fontFamily: "var(--font-sans)" }}>
           Animal data © Movebank · Cams © explore.org
         </span>
       </footer>
