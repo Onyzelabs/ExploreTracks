@@ -10,6 +10,7 @@ import type {
   SidebarContent,
 } from "@/lib/types";
 import { CATEGORY_META, ANIMAL_TYPE_META } from "@/lib/types";
+import { getTerminator } from "@/lib/terminator";
 
 interface MapContainerProps {
   cameras: ExploreCamera[];
@@ -22,7 +23,7 @@ interface MapContainerProps {
   /** When non-null, display only up to this coordinate index on the active track */
   playbackIndex: number | null;
   /** OpenWeatherMap layer type to overlay (null = no overlay) */
-  weatherLayer: "clouds_new" | "precipitation_new" | "wind_new" | null;
+  weatherLayer: "clouds_new" | "precipitation_new" | "wind_new" | "terminator" | null;
   mapStyle: string;
   onOpenCamera: (camera: ExploreCamera) => void;
   onSelectAnimal: (content: SidebarContent) => void;
@@ -444,7 +445,7 @@ export default function MapContainer({
       if (map.getSource(SRC)) map.removeSource(SRC);
     };
 
-    if (!weatherLayer) {
+    if (weatherLayer !== "precipitation_new") {
       removeLayerAndSource();
       return;
     }
@@ -483,6 +484,53 @@ export default function MapContainer({
 
     return () => { active = false; };
   }, [weatherLayer, isLoaded]);
+
+  // ── Sunlight Terminator Layer ────────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded) return;
+
+    const SRC = "terminator-src";
+    const LYR = "terminator-lyr";
+
+    if (weatherLayer !== "terminator") {
+      if (map.getLayer(LYR)) map.removeLayer(LYR);
+      if (map.getSource(SRC)) map.removeSource(SRC);
+      return;
+    }
+
+    let currentTime = new Date();
+    if (activeTrackId && playbackIndex !== null) {
+      const activeTrack = tracks.find((t) => t.id === activeTrackId);
+      if (activeTrack && activeTrack.coordinates[playbackIndex]) {
+        currentTime = new Date(activeTrack.coordinates[playbackIndex].timestamp);
+      }
+    }
+
+    const geojson = getTerminator(currentTime);
+
+    if (map.getSource(SRC)) {
+      (map.getSource(SRC) as maplibregl.GeoJSONSource).setData(geojson as any);
+    } else {
+      map.addSource(SRC, {
+        type: "geojson",
+        data: geojson as any,
+      });
+      map.addLayer(
+        {
+          id: LYR,
+          type: "fill",
+          source: SRC,
+          paint: {
+            "fill-color": "#000000",
+            "fill-opacity": 0.45,
+          },
+        },
+        // Insert below paths/points if possible
+        map.getLayer("track-line") ? "track-line" : undefined
+      );
+    }
+  }, [weatherLayer, isLoaded, activeTrackId, playbackIndex, tracks]);
 
   // ── Compare mode: make additional tracks visible simultaneously ───────────────
   useEffect(() => {

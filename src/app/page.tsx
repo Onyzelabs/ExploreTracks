@@ -79,7 +79,7 @@ export default function Home() {
   // Compare mode: set of track IDs shown simultaneously on the map
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   // Weather overlay layer
-  const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | null>(null);
+  const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | "terminator" | null>(null);
 
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
   const { subscribe, unsubscribe, isSubscribed } = useCameraNotifications();
@@ -260,8 +260,9 @@ export default function Home() {
               style={{ fontFamily: "var(--font-sans)" }}
               title="Weather overlay"
             >
-              <option value="">No Weather</option>
+              <option value="">No Overlay</option>
               <option value="precipitation_new">🌧 Radar</option>
+              <option value="terminator">🌗 Day/Night</option>
             </select>
 
             {/* Camera list panel toggle */}
@@ -331,8 +332,9 @@ export default function Home() {
                 className="w-full text-sm px-3 py-2 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
-                <option value="">No Weather</option>
+                <option value="">No Overlay</option>
                 <option value="precipitation_new">🌧 Radar</option>
+                <option value="terminator">🌗 Day/Night</option>
               </select>
             </div>
 
