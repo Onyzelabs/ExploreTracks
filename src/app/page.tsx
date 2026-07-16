@@ -67,6 +67,7 @@ export default function Home() {
     "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   );
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [playbackIndex, setPlaybackIndex] = useState<number | null>(null);
 
   const { cameras, isLoading: camLoading, error: camError } = useCameras();
   const { tracks, isLoading: trackLoading, error: trackError } = useTracks();
@@ -102,9 +103,17 @@ export default function Home() {
 
   const handleSelectAnimal = useCallback((content: SidebarContent) => {
     setSidebarContent(content);
+    setPlaybackIndex(null); // Reset playback when switching animals
   }, []);
 
-  const handleCloseSidebar = useCallback(() => setSidebarContent(null), []);
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarContent(null);
+    setPlaybackIndex(null);
+  }, []);
+
+  const handlePlaybackIndex = useCallback((index: number | null) => {
+    setPlaybackIndex(index);
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -258,6 +267,7 @@ export default function Home() {
             activeTrackId={
               sidebarContent?.type === "animal" ? sidebarContent.track.id : null
             }
+            playbackIndex={playbackIndex}
             mapStyle={mapStyle}
             onOpenCamera={handleOpenCamera}
             onSelectAnimal={handleSelectAnimal}
@@ -293,6 +303,7 @@ export default function Home() {
             <AnimalInfo
               track={sidebarContent.track}
               onClose={handleCloseSidebar}
+              onPlaybackIndex={handlePlaybackIndex}
             />
           </aside>
         )}

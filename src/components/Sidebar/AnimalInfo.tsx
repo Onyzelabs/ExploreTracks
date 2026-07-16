@@ -1,22 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useEffect, useState, useRef, useCallback } from "react";
 import type { AnimalTrack } from "@/lib/types";
 
 interface AnimalInfoProps {
   track: AnimalTrack;
   onClose: () => void;
+  /** Called when the user scrubs the timeline; passes the active point index */
+  onPlaybackIndex?: (index: number | null) => void;
 }
 
-export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
+export default function AnimalInfo({ track, onClose, onPlaybackIndex }: AnimalInfoProps) {
   const start = track.coordinates[0];
   const end = track.coordinates[track.coordinates.length - 1];
   const startDate = new Date(start.timestamp).toLocaleDateString();
   const endDate = new Date(end.timestamp).toLocaleDateString();
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [playbackIdx, setPlaybackIdx] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Reset playback when track changes
+  useEffect(() => {
+    setPlaybackIdx(null);
+    setIsPlaying(false);
+    onPlaybackIndex?.(null);
+  }, [track.id]);
+
+  // Fetch Wikipedia image
   useEffect(() => {
     let active = true;
     setImageUrl(null);
@@ -33,12 +45,59 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
       })
       .catch((err) => console.error("Wiki fetch error:", err));
 
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [track.species]);
 
-  // Rough distance in km between first and last point (haversine)
+  // Auto-play: advance index every 80ms
+  useEffect(() => {
+    if (!isPlaying) {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current);
+      return;
+    }
+
+    const total = track.coordinates.length;
+    let idx = playbackIdx ?? 0;
+
+    playIntervalRef.current = setInterval(() => {
+      idx = idx + 1;
+      if (idx >= total) {
+        idx = total - 1;
+        setIsPlaying(false);
+      }
+      setPlaybackIdx(idx);
+      onPlaybackIndex?.(idx);
+    }, 80);
+
+    return () => {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current);
+    };
+  }, [isPlaying, track.coordinates.length]);
+
+  const handleScrub = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const idx = parseInt(e.target.value, 10);
+    setPlaybackIdx(idx);
+    onPlaybackIndex?.(idx);
+  }, [onPlaybackIndex]);
+
+  const handlePlayPause = useCallback(() => {
+    // If at end, restart from beginning
+    if (!isPlaying && playbackIdx === track.coordinates.length - 1) {
+      setPlaybackIdx(0);
+      onPlaybackIndex?.(0);
+    }
+    setIsPlaying((v) => !v);
+  }, [isPlaying, playbackIdx, track.coordinates.length, onPlaybackIndex]);
+
+  const handleReset = useCallback(() => {
+    setIsPlaying(false);
+    setPlaybackIdx(null);
+    onPlaybackIndex?.(null);
+  }, [onPlaybackIndex]);
+
+  // The point currently shown (null = show full track)
+  const activePoint =
+    playbackIdx !== null ? track.coordinates[playbackIdx] : null;
+
   const distKm = haversine(
     start.latitude,
     start.longitude,
@@ -46,10 +105,13 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
     end.longitude,
   );
 
+  const total = track.coordinates.length;
+  const pct = playbackIdx !== null ? (playbackIdx / (total - 1)) * 100 : 100;
+
   return (
     <div className="sidebar-enter flex flex-col h-full bg-[var(--color-surface-800)] border-l border-[var(--glass-border)]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
+      <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)] flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <span
             className="flex-shrink-0 w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-[var(--color-surface-800)]"
@@ -75,7 +137,7 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
         </button>
       </div>
 
-      {/* Scrollable body: notice + image + stats + details */}
+      {/* Scrollable body */}
       <div
         className="flex-1 overflow-y-auto overscroll-contain px-4 pb-8 space-y-4"
         style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
@@ -84,8 +146,8 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mt-4">
           <span>📡</span>
           <span>
-            <b>Telemetry Data Only:</b> This is GPS tracking data from Movebank,
-            not a video feed.
+            <b>Telemetry Data Only:</b> GPS tracking data from Movebank, not a
+            video feed.
           </span>
         </div>
 
@@ -100,9 +162,86 @@ export default function AnimalInfo({ track, onClose }: AnimalInfoProps) {
           </div>
         )}
 
+        {/* ── Track Playback ─────────────────────────────────────────── */}
+        <div
+          className="rounded-xl border border-white/10 bg-black/20 p-3 space-y-3"
+          id={`track-playback-${track.id}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-neutral-400 uppercase tracking-wider font-semibold">
+              Track Playback
+            </span>
+            <span className="text-xs text-neutral-500">
+              {playbackIdx !== null ? `${playbackIdx + 1} / ${total}` : `${total} pts`}
+            </span>
+          </div>
+
+          {/* Scrubber */}
+          <div className="relative">
+            <input
+              type="range"
+              min={0}
+              max={total - 1}
+              step={1}
+              value={playbackIdx ?? total - 1}
+              onChange={handleScrub}
+              className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, ${track.color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+                accentColor: track.color,
+              }}
+              aria-label="Track playback scrubber"
+            />
+          </div>
+
+          {/* Time info */}
+          <div className="flex items-center justify-between text-[11px] text-neutral-500">
+            <span>{new Date(start.timestamp).toLocaleDateString()}</span>
+            <span>
+              {activePoint
+                ? new Date(activePoint.timestamp).toLocaleString([], {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : new Date(end.timestamp).toLocaleDateString()}
+            </span>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePlayPause}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              style={{
+                background: isPlaying ? `${track.color}22` : `${track.color}33`,
+                color: track.color,
+                border: `1px solid ${track.color}44`,
+              }}
+              aria-label={isPlaying ? "Pause playback" : "Play playback"}
+            >
+              {isPlaying ? "⏸ Pause" : "▶ Play"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-neutral-400 hover:text-white border border-white/10 transition-colors"
+              aria-label="Reset to full track"
+            >
+              Reset
+            </button>
+            {activePoint && (
+              <span className="ml-auto text-[11px] text-neutral-500 font-mono">
+                {activePoint.latitude.toFixed(3)}°,{" "}
+                {activePoint.longitude.toFixed(3)}°
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Track Points" value={track.coordinates.length.toString()} />
+          <StatCard label="Track Points" value={total.toString()} />
           <StatCard label="Distance" value={`~${distKm.toFixed(0)} km`} />
           <StatCard label="Start Date" value={startDate} />
           <StatCard label="Latest Fix" value={endDate} />
@@ -169,12 +308,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function haversine(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;

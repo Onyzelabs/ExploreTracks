@@ -16,6 +16,8 @@ interface MapContainerProps {
   filter: FilterState;
   openVideoIds: Set<string>;
   activeTrackId: string | null;
+  /** When non-null, display only up to this coordinate index on the active track */
+  playbackIndex: number | null;
   mapStyle: string;
   onOpenCamera: (camera: ExploreCamera) => void;
   onSelectAnimal: (content: SidebarContent) => void;
@@ -128,6 +130,7 @@ export default function MapContainer({
   filter,
   openVideoIds,
   activeTrackId,
+  playbackIndex,
   mapStyle,
   onOpenCamera,
   onSelectAnimal,
@@ -147,6 +150,8 @@ export default function MapContainer({
   const trackSourcesRef = useRef<globalThis.Set<string>>(new globalThis.Set());
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const markerPopupRef = useRef<maplibregl.Popup | null>(null);
+  // Glowing dot that follows the playback scrubber position
+  const playbackMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   // ── One-time map init ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -193,6 +198,8 @@ export default function MapContainer({
       popupRef.current = null;
       if (markerPopupRef.current) markerPopupRef.current.remove();
       markerPopupRef.current = null;
+      if (playbackMarkerRef.current) playbackMarkerRef.current.remove();
+      playbackMarkerRef.current = null;
       camMarkersRef.current.clear();
       animalMarkersRef.current.clear();
       trackSourcesRef.current.clear();
@@ -413,6 +420,98 @@ export default function MapContainer({
     });
   }, [tracks, filter.animalTypes, filter.searchText, activeTrackId, isLoaded]);
 
+  // ── Playback: update track source data + move glowing position marker ────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded || !activeTrackId) {
+      // Remove playback marker when no track is active
+      if (playbackMarkerRef.current) {
+        playbackMarkerRef.current.remove();
+        playbackMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const track = tracks.find((t) => t.id === activeTrackId);
+    if (!track) return;
+
+    const srcId = `et-track-src-${track.id}`;
+    if (!map.getSource(srcId)) return;
+
+    // Determine how many points to show
+    const sliceEnd = playbackIndex !== null ? playbackIndex + 1 : track.coordinates.length;
+    const slicedCoords = track.coordinates.slice(0, sliceEnd);
+
+    // Rebuild GeoJSON with trimmed coordinates
+    const features: GeoJSON.Feature[] = [
+      {
+        type: "Feature",
+        properties: { trackId: track.id, type: "line" },
+        geometry: {
+          type: "LineString",
+          coordinates: slicedCoords.map((c) => [c.longitude, c.latitude]),
+        },
+      },
+    ];
+
+    slicedCoords.forEach((c, index) => {
+      const isLatest = index === slicedCoords.length - 1;
+      features.push({
+        type: "Feature",
+        properties: {
+          trackId: track.id,
+          type: "point",
+          animalName: track.commonName || track.individualName,
+          timestamp: c.timestamp,
+          speed: c.speed ?? null,
+          color: track.color,
+          isLatest,
+        },
+        geometry: { type: "Point", coordinates: [c.longitude, c.latitude] },
+      });
+    });
+
+    (map.getSource(srcId) as maplibregl.GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features,
+    });
+
+    // Move/create the glowing position marker at the current scrub point
+    const currentCoord = slicedCoords[slicedCoords.length - 1];
+    if (!currentCoord) return;
+
+    const lngLat: [number, number] = [currentCoord.longitude, currentCoord.latitude];
+
+    if (playbackIndex !== null) {
+      if (!playbackMarkerRef.current) {
+        const dot = document.createElement("div");
+        dot.style.cssText = `
+          width: 16px; height: 16px; border-radius: 50%;
+          background: ${track.color};
+          border: 2.5px solid white;
+          box-shadow: 0 0 12px ${track.color}, 0 0 24px ${track.color}88;
+          pointer-events: none;
+        `;
+        playbackMarkerRef.current = new maplibregl.Marker({ element: dot, anchor: "center" })
+          .setLngLat(lngLat)
+          .addTo(map);
+      } else {
+        playbackMarkerRef.current.setLngLat(lngLat);
+      }
+
+      // Gently pan map to keep the playback position visible
+      if (!map.getBounds().contains(lngLat)) {
+        map.easeTo({ center: lngLat, duration: 600 });
+      }
+    } else {
+      // Reset: remove the position marker
+      if (playbackMarkerRef.current) {
+        playbackMarkerRef.current.remove();
+        playbackMarkerRef.current = null;
+      }
+    }
+  }, [playbackIndex, activeTrackId, tracks, isLoaded]);
+
   // ── Camera markers: add new, update open-state styling, toggle visibility ──
   useEffect(() => {
     const map = mapRef.current;
@@ -472,19 +571,35 @@ export default function MapContainer({
         }
 
         const div = document.createElement("div");
-        div.innerHTML = `
-          <div style="background: var(--color-surface-900); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); width: 240px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-            <div style="font-family: var(--font-sans); font-size: 16px; font-weight: 600; line-height: 1.4; color: white; margin-bottom: 10px;">${cam.name}</div>
-            <div style="position: relative; width: 100%; border-radius: 6px; overflow: hidden; background: #000;">
-              <img 
-                src="${cam.thumbnail}" 
-                onerror="this.onerror=null; this.src='https://img.youtube.com/vi/${cam.id}/hqdefault.jpg';" 
-                style="width: 100%; display: block; object-fit: cover; aspect-ratio: 16/9;" 
-                alt="Live Preview" 
-              />
-            </div>
-          </div>
-        `;
+        // Build Live badge HTML conditionally (avoids nested template literal)
+        const liveBadgeHtml = cam.isLive
+          ? '<span style="display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#f87171;white-space:nowrap;">'
+            + '<span style="width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block;animation:et-ping 2.4s cubic-bezier(0,0,0.2,1) infinite;"></span>'
+            + "LIVE</span>"
+          : "";
+        // Build the popup content using string concatenation to avoid nested-backtick issues
+        div.innerHTML =
+          '<div style="background: var(--color-surface-900); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border); width: 240px; box-shadow: 0 8px 24px rgba(0,0,0,0.6);">'
+          + '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">'
+          + '<div style="font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: white; line-height:1.3; flex:1; margin-right:8px;">'
+          + cam.name
+          + "</div>"
+          + liveBadgeHtml
+          + "</div>"
+          + '<div style="position: relative; width: 100%; border-radius: 6px; overflow: hidden; background: #000; aspect-ratio: 16/9;">'
+          + '<img'
+          + ' src="' + cam.thumbnail + '"'
+          + " onerror=\"this.onerror=null; this.src='https://img.youtube.com/vi/" + cam.youtubeVideoId + "/hqdefault.jpg';\""
+          + ' style="width: 100%; height: 100%; display: block; object-fit: cover;"'
+          + ' alt="Live Preview"'
+          + " />"
+          + "</div>"
+          + '<div style="font-family: var(--font-sans); font-size: 11px; color: #71717a; margin-top:8px; display:flex; align-items:center; gap:4px;">'
+          + "<span>\uD83D\uDCCD</span><span>"
+          + cam.location
+          + "</span>"
+          + "</div>"
+          + "</div>";
 
         div.addEventListener("mouseenter", () => {
           if (hideTimeout) clearTimeout(hideTimeout);
@@ -514,7 +629,16 @@ export default function MapContainer({
           if (markerPopupRef.current) markerPopupRef.current.remove();
         }, 150);
       });
-      el.addEventListener("click", () => onOpenCamera(cam));
+      el.addEventListener("click", () => {
+        onOpenCamera(cam);
+        // Fly to camera location on click; preserve current zoom if already zoomed in past level 5
+        map.flyTo({
+          center: cam.coordinates,
+          zoom: Math.max(mapRef.current?.getZoom() ?? 4, 5),
+          speed: 1.4,
+          essential: true,
+        });
+      });
 
       const marker = new maplibregl.Marker({ element: el, anchor: "center" })
         .setLngLat(cam.coordinates)
