@@ -1,5 +1,6 @@
 "use client";
 
+import { renderToString } from "react-dom/server";
 import { useEffect, useRef, useState, useCallback } from "react";
 import maplibregl, { Map as MaplibreMap } from "maplibre-gl";
 import type {
@@ -27,14 +28,8 @@ interface MapContainerProps {
   onSelectAnimal: (content: SidebarContent) => void;
 }
 
-// OpenWeatherMap free tile URL (no API key needed for basic layers)
-const OWM_TILE = (layer: string) =>
-  `https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=`;
-// We use a public demo key; for production set NEXT_PUBLIC_OWM_KEY in env
-const OWM_KEY =
-  typeof process !== "undefined"
-    ? (process.env.NEXT_PUBLIC_OWM_KEY ?? "")
-    : "";
+// We use Rainviewer for free weather radar (no API key required)
+const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
 
 const BASEMAP_STYLE =
   "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json";
@@ -90,9 +85,9 @@ function buildCameraMarker(
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; line-height: 1;
       box-shadow: 0 0 ${isOpen ? 20 : 10}px ${meta.color}${isOpen ? "88" : "44"},
-                  0 0 ${isOpen ? 40 : 20}px ${meta.color}${isOpen ? "33" : "11"};
       transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    ">${meta.emoji}</div>
+      color: ${isOpen ? "#fff" : meta.color};
+    ">${renderToString(<meta.icon size={18} strokeWidth={2.5} />)}</div>
     <div style="
       position: absolute;
       inset: -8px;
@@ -129,7 +124,8 @@ function buildAnimalMarker(track: AnimalTrack): HTMLElement {
       font-size: 16px; line-height: 1;
       box-shadow: 0 0 14px ${track.color}55, 0 0 28px ${track.color}22;
       transition: border-color 0.2s ease;
-    ">${meta.emoji}</div>
+      color: ${track.color};
+    ">${renderToString(<meta.icon size={16} strokeWidth={2.5} />)}</div>
   `;
 
   return el;
@@ -435,36 +431,57 @@ export default function MapContainer({
     });
   }, [tracks, filter.animalTypes, filter.searchText, activeTrackId, isLoaded]);
 
-  // ── Weather overlay: toggle OpenWeatherMap raster tile layer ─────────────────
+  // ── Weather overlay: toggle Rainviewer radar tile layer ─────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isLoaded) return;
 
-    const SRC = "owm-weather-src";
-    const LYR = "owm-weather-lyr";
+    const SRC = "weather-src";
+    const LYR = "weather-lyr";
 
-    // Remove existing layer/source first
-    if (map.getLayer(LYR)) map.removeLayer(LYR);
-    if (map.getSource(SRC)) map.removeSource(SRC);
+    const removeLayerAndSource = () => {
+      if (map.getLayer(LYR)) map.removeLayer(LYR);
+      if (map.getSource(SRC)) map.removeSource(SRC);
+    };
 
-    if (!weatherLayer || !OWM_KEY) return;
-
-    try {
-      map.addSource(SRC, {
-        type: "raster",
-        tiles: [`${OWM_TILE(weatherLayer)}${OWM_KEY}`],
-        tileSize: 256,
-        attribution: "Weather © OpenWeatherMap",
-      });
-      map.addLayer({
-        id: LYR,
-        type: "raster",
-        source: SRC,
-        paint: { "raster-opacity": 0.6 },
-      });
-    } catch (err) {
-      console.warn("[MapContainer] Weather layer error:", err);
+    if (!weatherLayer) {
+      removeLayerAndSource();
+      return;
     }
+
+    // Fetch latest timestamp from Rainviewer
+    let active = true;
+    fetch(RAINVIEWER_API)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!active) return;
+        removeLayerAndSource();
+        
+        // Use the latest past radar frame
+        const past = data.radar?.past || [];
+        if (past.length === 0) return;
+        const latestTime = past[past.length - 1].time;
+        
+        // e.g. https://tilecache.rainviewer.com/v2/radar/1715694000/256/{z}/{x}/{y}/2/1_1.png
+        // (color scheme 2, smooth 1, snow 1)
+        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${latestTime}/256/{z}/{x}/{y}/2/1_1.png`;
+
+        map.addSource(SRC, {
+          type: "raster",
+          tiles: [tileUrl],
+          tileSize: 256,
+          attribution: "Weather © RainViewer",
+        });
+        map.addLayer({
+          id: LYR,
+          type: "raster",
+          source: SRC,
+          paint: { "raster-opacity": 0.6 },
+        });
+      })
+      .catch((err) => console.warn("[MapContainer] Rainviewer error:", err));
+
+    return () => { active = false; };
   }, [weatherLayer, isLoaded]);
 
   // ── Compare mode: make additional tracks visible simultaneously ───────────────
@@ -667,7 +684,8 @@ export default function MapContainer({
           + " />"
           + "</div>"
           + '<div style="font-family: var(--font-sans); font-size: 11px; color: #71717a; margin-top:8px; display:flex; align-items:center; gap:4px;">'
-          + "<span>\uD83D\uDCCD</span><span>"
+          + '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
+          + "<span>"
           + cam.location
           + "</span>"
           + "</div>"

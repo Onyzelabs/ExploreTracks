@@ -157,7 +157,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
                     color: active ? meta.color : "#71717a",
                   }}
                 >
-                  <span>{meta.emoji}</span>
+                  <meta.icon size={14} />
                   <span>{meta.label}</span>
                 </button>
               );
@@ -193,7 +193,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
                     color: active ? meta.color : "#71717a",
                   }}
                 >
-                  <span>{meta.emoji}</span>
+                  <meta.icon size={14} />
                   <span>{meta.label}</span>
                 </button>
               );

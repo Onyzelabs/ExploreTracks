@@ -241,12 +241,10 @@ export default function Home() {
               onChange={(e) => setWeatherLayer((e.target.value || null) as typeof weatherLayer)}
               className="hidden sm:block text-sm px-3 py-1.5 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none focus:border-blue-500"
               style={{ fontFamily: "var(--font-sans)" }}
-              title="Weather overlay (requires NEXT_PUBLIC_OWM_KEY)"
+              title="Weather overlay"
             >
               <option value="">No Weather</option>
-              <option value="clouds_new">☁ Clouds</option>
-              <option value="precipitation_new">🌧 Rain</option>
-              <option value="wind_new">💨 Wind</option>
+              <option value="precipitation_new">🌧 Radar</option>
             </select>
 
             {/* Camera list panel toggle */}
@@ -294,17 +292,38 @@ export default function Home() {
         {/* Mobile dropdown menu */}
         {showMobileMenu && (
           <div className="sm:hidden flex flex-col gap-3 px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--color-surface-950)]">
-            <select
-              value={mapStyle}
-              onChange={(e) => { setMapStyle(e.target.value); setShowMobileMenu(false); }}
-              className="w-full text-sm px-3 py-2 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none"
-              style={{ fontFamily: "var(--font-sans)" }}
+            <button
+              onClick={() => { setShowCameraList(true); setShowMobileMenu(false); }}
+              className="w-full flex items-center justify-center gap-1.5 text-sm py-2 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40"
             >
-              <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Map</option>
-              <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
-              <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
-              <option value="satellite">Satellite</option>
-            </select>
+              <LayoutList size={15} />
+              Browse Cameras
+            </button>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={mapStyle}
+                onChange={(e) => { setMapStyle(e.target.value); setShowMobileMenu(false); }}
+                className="w-full text-sm px-3 py-2 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Map</option>
+                <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
+                <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
+                <option value="satellite">Satellite</option>
+              </select>
+              
+              <select
+                value={weatherLayer ?? ""}
+                onChange={(e) => { setWeatherLayer((e.target.value || null) as typeof weatherLayer); setShowMobileMenu(false); }}
+                className="w-full text-sm px-3 py-2 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                <option value="">No Weather</option>
+                <option value="precipitation_new">🌧 Radar</option>
+              </select>
+            </div>
+
             {openVideos.length > 0 && (
               <button
                 onClick={() => { setOpenVideos([]); setShowMobileMenu(false); }}
@@ -355,13 +374,13 @@ export default function Home() {
             onClose={handleCloseVideo}
           />
 
-          {/* Click-to-open hint (only when no videos open yet) */}
+            {/* Click-to-open hint (only when no videos open yet) */}
           {!camLoading &&
             (cameras?.length ?? 0) > 0 &&
             openVideos.length === 0 && (
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none anim-fade-in">
                 <div className="glass-card-sm px-4 py-2 text-xs text-neutral-400 flex items-center gap-2">
-                  <span>📷</span>
+                  <Camera size={14} className="text-neutral-300" />
                   <span style={{ fontFamily: "var(--font-sans)" }}>
                     Click a camera icon on the map to open a live stream
                   </span>

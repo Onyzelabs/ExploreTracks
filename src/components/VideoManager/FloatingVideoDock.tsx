@@ -63,7 +63,7 @@ function FloatingVideoPanel({
         className={`${mobile ? "" : "drag-handle"} flex items-center gap-2 px-3 py-2 border-b border-white/5 ${mobile ? "cursor-default" : "cursor-move"} select-none flex-shrink-0`}
         style={{ borderColor: `${meta.color}22` }}
       >
-        <span className="text-base leading-none pointer-events-none">{meta.emoji}</span>
+        <meta.icon size={16} className="pointer-events-none" />
         <span
           className="text-sm font-bold truncate flex-1"
           style={{ fontFamily: "var(--font-sans)", color: meta.color }}
@@ -120,7 +120,7 @@ function FloatingVideoPanel({
         <div className="relative flex-1 bg-black overflow-hidden" style={{ minHeight: 0 }}>
           {embedError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900 p-4 text-center">
-              <span className="text-2xl">{meta.emoji}</span>
+              <meta.icon size={24} />
               <p className="text-sm text-neutral-400 leading-relaxed">
                 Embedding is disabled for this stream by the broadcaster.
               </p>
@@ -208,7 +208,7 @@ function MobileVideoTray({ openPanels, onClose }: MobileVideoTrayProps) {
                     : "text-neutral-400 hover:text-neutral-200"
                 }`}
               >
-                <span>{meta.emoji}</span>
+                <meta.icon size={14} />
                 <span className="max-w-[100px] truncate">{panel.camera.name}</span>
               </button>
             );

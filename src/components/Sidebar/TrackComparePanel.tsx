@@ -89,7 +89,7 @@ export default function TrackComparePanel({
                   >
                     {track.individualName}
                   </span>
-                  <span className="text-base flex-shrink-0">{meta.emoji}</span>
+                  <meta.icon size={16} className="flex-shrink-0" />
                 </div>
                 <button
                   onClick={() => onToggleTrack(track.id)}

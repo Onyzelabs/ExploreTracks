@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  Bird, PawPrint, Waves, Fish, Bug, HelpCircle,
+  Camera, TentTree, Trees, MapPin
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ─── Category / Type Definitions ─────────────────────────────────────────────
 
@@ -28,28 +33,28 @@ export type AnimalType = z.infer<typeof AnimalTypeSchema>;
 
 export const CATEGORY_META: Record<
   CameraCategory,
-  { emoji: string; color: string; label: string }
+  { icon: LucideIcon; color: string; label: string }
 > = {
-  birds: { emoji: "🦅", color: "#a3e635", label: "Birds" },
-  mammals: { emoji: "🐾", color: "#f97316", label: "Mammals" },
-  marine: { emoji: "🐬", color: "#06b6d4", label: "Marine" },
-  bears: { emoji: "🐻", color: "#f59e0b", label: "Bears" },
-  african: { emoji: "🦁", color: "#fb923c", label: "African Wildlife" },
-  general: { emoji: "📷", color: "#a78bfa", label: "General" },
+  birds: { icon: Bird, color: "#a3e635", label: "Birds" },
+  mammals: { icon: PawPrint, color: "#f97316", label: "Mammals" },
+  marine: { icon: Waves, color: "#06b6d4", label: "Marine" },
+  bears: { icon: PawPrint, color: "#f59e0b", label: "Bears" },
+  african: { icon: TentTree, color: "#fb923c", label: "African Wildlife" },
+  general: { icon: Camera, color: "#a78bfa", label: "General" },
 };
 
 export const ANIMAL_TYPE_META: Record<
   AnimalType,
-  { emoji: string; color: string; label: string }
+  { icon: LucideIcon; color: string; label: string }
 > = {
-  bird: { emoji: "🦅", color: "#a3e635", label: "Birds" },
-  mammal: { emoji: "🐾", color: "#f97316", label: "Mammals" },
-  marine_mammal: { emoji: "🐬", color: "#06b6d4", label: "Marine Mammals" },
-  bear: { emoji: "🐻", color: "#f59e0b", label: "Bears" },
-  reptile: { emoji: "🦎", color: "#4ade80", label: "Reptiles" },
-  fish: { emoji: "🐟", color: "#38bdf8", label: "Fish" },
-  insect: { emoji: "🦋", color: "#e879f9", label: "Insects" },
-  unknown: { emoji: "❔", color: "#9ca3af", label: "Unknown" },
+  bird: { icon: Bird, color: "#a3e635", label: "Birds" },
+  mammal: { icon: PawPrint, color: "#f97316", label: "Mammals" },
+  marine_mammal: { icon: Waves, color: "#06b6d4", label: "Marine Mammals" },
+  bear: { icon: PawPrint, color: "#f59e0b", label: "Bears" },
+  reptile: { icon: Trees, color: "#4ade80", label: "Reptiles" },
+  fish: { icon: Fish, color: "#38bdf8", label: "Fish" },
+  insect: { icon: Bug, color: "#e879f9", label: "Insects" },
+  unknown: { icon: HelpCircle, color: "#9ca3af", label: "Unknown" },
 };
 
 // ─── Explore.org Camera ───────────────────────────────────────────────────────

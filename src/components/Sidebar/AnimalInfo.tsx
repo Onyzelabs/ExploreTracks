@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { AnimalTrack } from "@/lib/types";
+import { X, Satellite, ExternalLink } from "lucide-react";
 
 interface AnimalInfoProps {
   track: AnimalTrack;
@@ -147,7 +148,7 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
             className="w-10 h-10 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors"
             aria-label="Close panel"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
       </div>
@@ -159,11 +160,11 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
       >
         {/* Telemetry Notice */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mt-4">
-          <span>📡</span>
-          <span>
-            <b>Telemetry Data Only:</b> GPS tracking data from Movebank, not a
-            video feed.
-          </span>
+          <Satellite size={16} />
+          <div className="flex-1">
+            <span className="font-semibold block leading-tight">Telemetry active</span>
+            <span className="text-[10px] opacity-80 leading-tight">Syncing with collar data</span>
+          </div>
         </div>
 
         {imageUrl && (
@@ -315,9 +316,9 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
           href="https://www.movebank.org"
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full text-center py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 text-base font-semibold hover:bg-cyan-500/30 hover:border-cyan-500/60 transition-all duration-200"
+          className="mt-3 w-full flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
         >
-          View on Movebank ↗
+          View on Movebank <ExternalLink size={12} />
         </a>
       </div>
     </div>

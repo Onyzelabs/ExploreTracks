@@ -143,9 +143,9 @@ export default function CameraListPanel({
                     </div>
                   )}
                   {/* Category emoji */}
-                  <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-sm"
-                    style={{ background: meta.color + "33", border: `1px solid ${meta.color}66` }}>
-                    {meta.emoji}
+                  <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ background: meta.color + "33", border: `1px solid ${meta.color}66`, color: meta.color }}>
+                    <meta.icon size={14} />
                   </div>
                   {/* Favorite button */}
                   <button
