@@ -106,8 +106,8 @@ export default function CameraListPanel({
           />
         </div>
 
-        {/* Camera grid */}
-        <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start" style={{ WebkitOverflowScrolling: "touch" }}>
+        {/* Camera list */}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4" style={{ WebkitOverflowScrolling: "touch" }}>
           {filtered.length === 0 && (
             <div className="col-span-2 text-center text-neutral-500 text-sm py-8">
               {showFavOnly ? "No favorites yet. Click ♡ on any camera." : "No cameras found."}
@@ -122,83 +122,69 @@ export default function CameraListPanel({
             return (
               <div
                 key={cam.id}
-                className="flex flex-col rounded-xl border border-[var(--glass-border)] bg-[var(--color-surface-800)] overflow-hidden hover:border-white/15 transition-colors"
+                className="flex flex-row h-32 rounded-xl border border-[var(--glass-border)] bg-[var(--color-surface-800)] overflow-hidden hover:border-white/15 transition-colors group"
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-black flex-shrink-0">
+                <div className="relative w-32 sm:w-40 h-full bg-black flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={cam.thumbnail}
                     alt={cam.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${cam.youtubeVideoId}/hqdefault.jpg`;
                     }}
                   />
                   {/* Live badge */}
                   {cam.isLive && (
-                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 border border-red-500/40">
-                      <Radio size={8} className="text-red-400 animate-pulse" />
+                    <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 border border-red-500/40">
+                      <Radio size={10} className="text-red-400 animate-pulse" />
                       <span className="text-[10px] font-bold text-red-400">LIVE</span>
                     </div>
                   )}
-                  {/* Category emoji */}
-                  <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ background: meta.color + "33", border: `1px solid ${meta.color}66`, color: meta.color }}>
+                  {/* Category icon */}
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-lg"
+                    style={{ background: meta.color + "dd", color: "#000" }}>
                     <meta.icon size={14} />
                   </div>
-                  {/* Favorite button */}
-                  <button
-                    onClick={() => onToggleFavorite(cam.id)}
-                    className="absolute bottom-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 transition-transform hover:scale-110"
-                    aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                  >
-                    <Heart
-                      size={14}
-                      className={isFav ? "text-orange-400 fill-orange-400" : "text-neutral-300"}
-                    />
-                  </button>
                 </div>
 
                 {/* Info */}
-                <div className="p-2 flex flex-col gap-1.5 flex-1">
-                  <p className="text-xs font-semibold text-neutral-100 leading-tight line-clamp-2" style={{ fontFamily: "var(--font-sans)" }}>
-                    {cam.name}
-                  </p>
-                  <p className="text-[10px] text-neutral-500 truncate">{cam.location}</p>
-
-                  {/* Peak hours heatmap */}
-                  <div className="mt-1">
-                    <p className="text-[9px] text-neutral-600 mb-1 uppercase tracking-wider">Peak Activity</p>
-                    <div className="flex items-end gap-px h-4">
-                      {activity.map((v, h) => (
-                        <div
-                          key={h}
-                          className="flex-1 rounded-sm"
-                          style={{
-                            height: `${Math.max(15, v * 100)}%`,
-                            background: `rgba(249, 115, 22, ${0.2 + v * 0.7})`,
-                          }}
-                          title={`${h}:00 — ${Math.round(v * 100)}%`}
-                        />
-                      ))}
-                    </div>
+                <div className="p-3 flex flex-col flex-1 min-w-0">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-neutral-100 leading-tight line-clamp-2" style={{ fontFamily: "var(--font-sans)" }}>
+                      {cam.name}
+                    </p>
+                    <p className="text-xs text-neutral-400 truncate mt-0.5">{cam.location}</p>
                   </div>
 
-                  {/* Open button */}
-                  <button
-                    onClick={() => onOpen(cam)}
-                    disabled={isOpen}
-                    className="mt-1 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                    style={{
-                      background: isOpen ? "rgba(255,255,255,0.05)" : `${meta.color}22`,
-                      color: isOpen ? "#52525b" : meta.color,
-                      border: `1px solid ${isOpen ? "transparent" : meta.color + "44"}`,
-                      cursor: isOpen ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {isOpen ? "Already Open" : "Open Stream"}
-                  </button>
+                  <div className="flex items-center gap-3 mt-2">
+                    {/* Open button */}
+                    <button
+                      onClick={() => onOpen(cam)}
+                      disabled={isOpen}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                      style={{
+                        background: isOpen ? "rgba(255,255,255,0.05)" : `${meta.color}22`,
+                        color: isOpen ? "#52525b" : meta.color,
+                        border: `1px solid ${isOpen ? "transparent" : meta.color + "44"}`,
+                        cursor: isOpen ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {isOpen ? "Opened" : "Watch"}
+                    </button>
+                    {/* Favorite button */}
+                    <button
+                      onClick={() => onToggleFavorite(cam.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors flex-shrink-0"
+                      aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      <Heart
+                        size={16}
+                        className={isFav ? "text-orange-400 fill-orange-400" : "text-neutral-400"}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
