@@ -8,9 +8,11 @@ interface AnimalInfoProps {
   onClose: () => void;
   /** Called when the user scrubs the timeline; passes the active point index */
   onPlaybackIndex?: (index: number | null) => void;
+  /** Called when the user wants to add this track to comparison mode */
+  onCompare?: (track: AnimalTrack) => void;
 }
 
-export default function AnimalInfo({ track, onClose, onPlaybackIndex }: AnimalInfoProps) {
+export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare }: AnimalInfoProps) {
   const start = track.coordinates[0];
   const end = track.coordinates[track.coordinates.length - 1];
   const startDate = new Date(start.timestamp).toLocaleDateString();
@@ -127,14 +129,26 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex }: AnimalIn
             </span>
           </h2>
         </div>
-        <button
-          id={`close-animal-panel-${track.id}`}
-          onClick={onClose}
-          className="flex-shrink-0 ml-2 w-10 h-10 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors"
-          aria-label="Close panel"
-        >
-          ✕
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+          {onCompare && (
+            <button
+              id={`compare-animal-${track.id}`}
+              onClick={() => onCompare(track)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+              title="Add to track comparison"
+            >
+              + Compare
+            </button>
+          )}
+          <button
+            id={`close-animal-panel-${track.id}`}
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors"
+            aria-label="Close panel"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Scrollable body */}

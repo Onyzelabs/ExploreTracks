@@ -128,5 +128,8 @@ export interface OpenVideoPanel {
   slot: number;
 }
 
-// ─── Sidebar (animal info only now — cameras are floating panels) ─────────────
-export type SidebarContent = { type: "animal"; track: AnimalTrack } | null;
+// ─── Sidebar (animal info panel or multi-track comparison) ──────────────────
+export type SidebarContent =
+  | { type: "animal"; track: AnimalTrack }
+  | { type: "compare"; trackIds: Set<string> }
+  | null;

@@ -2,11 +2,15 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import type { SidebarContent, FilterState, ExploreCamera, OpenVideoPanel } from "@/lib/types";
-import { DEFAULT_FILTER, CATEGORY_META, ANIMAL_TYPE_META } from "@/lib/types";
+import type { SidebarContent, FilterState, ExploreCamera, OpenVideoPanel, AnimalTrack } from "@/lib/types";
+import { DEFAULT_FILTER } from "@/lib/types";
 import { useCameras, useTracks } from "@/lib/hooks";
+import { useFavorites } from "@/lib/useFavorites";
+import { useCameraNotifications } from "@/lib/useNotifications";
 import AnimalInfo from "@/components/Sidebar/AnimalInfo";
+import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
+import CameraListPanel from "@/components/Camera/CameraListPanel";
 
 const MapContainer = dynamic(() => import("@/components/Map/MapContainer"), {
   ssr: false,
@@ -68,6 +72,15 @@ export default function Home() {
   );
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [playbackIndex, setPlaybackIndex] = useState<number | null>(null);
+  // Compare mode: set of track IDs shown simultaneously on the map
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+  // Weather overlay layer
+  const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | null>(null);
+  // Camera list panel visibility
+  const [showCameraList, setShowCameraList] = useState(false);
+
+  const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
+  const { subscribe, unsubscribe, isSubscribed } = useCameraNotifications();
 
   const { cameras, isLoading: camLoading, error: camError } = useCameras();
   const { tracks, isLoading: trackLoading, error: trackError } = useTracks();
@@ -113,6 +126,31 @@ export default function Home() {
 
   const handlePlaybackIndex = useCallback((index: number | null) => {
     setPlaybackIndex(index);
+  }, []);
+
+  // Add a track to compare mode (switches sidebar to compare panel)
+  const handleCompare = useCallback((track: AnimalTrack) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      next.add(track.id);
+      return next;
+    });
+    setSidebarContent({ type: "compare", trackIds: new Set() });
+    setPlaybackIndex(null);
+  }, []);
+
+  const handleToggleCompareTrack = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.size === 0) setSidebarContent(null);
+      return next;
+    });
+  }, []);
+
+  const handleCloseCompare = useCallback(() => {
+    setSidebarContent(null);
+    setCompareIds(new Set());
   }, []);
 
   return (
@@ -192,6 +230,36 @@ export default function Home() {
               <option value="satellite">Satellite</option>
             </select>
 
+            {/* Weather overlay toggle — hidden on mobile */}
+            <select
+              value={weatherLayer ?? ""}
+              onChange={(e) => setWeatherLayer((e.target.value || null) as typeof weatherLayer)}
+              className="hidden sm:block text-sm px-3 py-1.5 rounded-md bg-[var(--color-surface-800)] border border-[var(--glass-border)] text-neutral-300 focus:outline-none focus:border-blue-500"
+              style={{ fontFamily: "var(--font-sans)" }}
+              title="Weather overlay (requires NEXT_PUBLIC_OWM_KEY)"
+            >
+              <option value="">No Weather</option>
+              <option value="clouds_new">☁ Clouds</option>
+              <option value="precipitation_new">🌧 Rain</option>
+              <option value="wind_new">💨 Wind</option>
+            </select>
+
+            {/* Camera list panel toggle */}
+            <button
+              id="toggle-camera-list"
+              onClick={() => setShowCameraList((v) => !v)}
+              className={`hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
+                showCameraList
+                  ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
+                  : "bg-[var(--color-surface-800)] border-[var(--glass-border)] text-neutral-300 hover:text-white"
+              }`}
+              style={{ fontFamily: "var(--font-sans)" }}
+              title="Browse all cameras"
+            >
+              📋 Cameras
+            </button>
+
+
             {/* External links — hidden on mobile */}
             <a href="https://explore.org" target="_blank" rel="noopener noreferrer" id="nav-explore-link"
               className="hidden sm:inline-flex text-sm px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors font-medium"
@@ -267,7 +335,9 @@ export default function Home() {
             activeTrackId={
               sidebarContent?.type === "animal" ? sidebarContent.track.id : null
             }
+            compareTrackIds={compareIds}
             playbackIndex={playbackIndex}
+            weatherLayer={weatherLayer}
             mapStyle={mapStyle}
             onOpenCamera={handleOpenCamera}
             onSelectAnimal={handleSelectAnimal}
@@ -294,7 +364,7 @@ export default function Home() {
             )}
         </div>
 
-        {/* Right sidebar — animal info only */}
+        {/* Right sidebar — animal info OR compare panel */}
         {sidebarContent?.type === "animal" && (
           <aside
             id="animal-sidebar"
@@ -304,10 +374,36 @@ export default function Home() {
               track={sidebarContent.track}
               onClose={handleCloseSidebar}
               onPlaybackIndex={handlePlaybackIndex}
+              onCompare={handleCompare}
+            />
+          </aside>
+        )}
+        {sidebarContent?.type === "compare" && (
+          <aside
+            id="compare-sidebar"
+            className="absolute sm:relative right-0 flex-shrink-0 w-full sm:w-[360px] h-full z-30 sm:z-10 anim-slide-right overflow-hidden shadow-2xl sm:shadow-none bg-[var(--color-surface-900)]"
+          >
+            <TrackComparePanel
+              tracks={tracks ?? []}
+              compareIds={compareIds}
+              onToggleTrack={handleToggleCompareTrack}
+              onClose={handleCloseCompare}
             />
           </aside>
         )}
       </main>
+
+      {/* Camera list panel */}
+      {showCameraList && (
+        <CameraListPanel
+          cameras={cameras ?? []}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          onOpen={(cam) => { handleOpenCamera(cam); }}
+          onClose={() => setShowCameraList(false)}
+          openVideoIds={openVideoIds}
+        />
+      )}
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="absolute bottom-1 right-1 z-10 pointer-events-none flex flex-col items-end opacity-50">

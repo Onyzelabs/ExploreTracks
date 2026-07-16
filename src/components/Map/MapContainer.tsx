@@ -16,12 +16,25 @@ interface MapContainerProps {
   filter: FilterState;
   openVideoIds: Set<string>;
   activeTrackId: string | null;
+  /** Set of track IDs to show simultaneously in comparison mode */
+  compareTrackIds?: Set<string>;
   /** When non-null, display only up to this coordinate index on the active track */
   playbackIndex: number | null;
+  /** OpenWeatherMap layer type to overlay (null = no overlay) */
+  weatherLayer: "clouds_new" | "precipitation_new" | "wind_new" | null;
   mapStyle: string;
   onOpenCamera: (camera: ExploreCamera) => void;
   onSelectAnimal: (content: SidebarContent) => void;
 }
+
+// OpenWeatherMap free tile URL (no API key needed for basic layers)
+const OWM_TILE = (layer: string) =>
+  `https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=`;
+// We use a public demo key; for production set NEXT_PUBLIC_OWM_KEY in env
+const OWM_KEY =
+  typeof process !== "undefined"
+    ? (process.env.NEXT_PUBLIC_OWM_KEY ?? "")
+    : "";
 
 const BASEMAP_STYLE =
   "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json";
@@ -130,7 +143,9 @@ export default function MapContainer({
   filter,
   openVideoIds,
   activeTrackId,
+  compareTrackIds,
   playbackIndex,
+  weatherLayer,
   mapStyle,
   onOpenCamera,
   onSelectAnimal,
@@ -419,6 +434,63 @@ export default function MapContainer({
       }
     });
   }, [tracks, filter.animalTypes, filter.searchText, activeTrackId, isLoaded]);
+
+  // ── Weather overlay: toggle OpenWeatherMap raster tile layer ─────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded) return;
+
+    const SRC = "owm-weather-src";
+    const LYR = "owm-weather-lyr";
+
+    // Remove existing layer/source first
+    if (map.getLayer(LYR)) map.removeLayer(LYR);
+    if (map.getSource(SRC)) map.removeSource(SRC);
+
+    if (!weatherLayer || !OWM_KEY) return;
+
+    try {
+      map.addSource(SRC, {
+        type: "raster",
+        tiles: [`${OWM_TILE(weatherLayer)}${OWM_KEY}`],
+        tileSize: 256,
+        attribution: "Weather © OpenWeatherMap",
+      });
+      map.addLayer({
+        id: LYR,
+        type: "raster",
+        source: SRC,
+        paint: { "raster-opacity": 0.6 },
+      });
+    } catch (err) {
+      console.warn("[MapContainer] Weather layer error:", err);
+    }
+  }, [weatherLayer, isLoaded]);
+
+  // ── Compare mode: make additional tracks visible simultaneously ───────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded) return;
+
+    tracks.forEach((track) => {
+      const glowId = `et-track-glow-${track.id}`;
+      const lineId = `et-track-line-${track.id}`;
+      const pointsId = `et-track-points-${track.id}`;
+
+      if (!map.getLayer(lineId)) return;
+
+      const isActive = track.id === activeTrackId;
+      const isCompared = compareTrackIds?.has(track.id) ?? false;
+      const visibility = isActive || isCompared ? "visible" : "none";
+
+      if (map.getLayer(glowId)) map.setLayoutProperty(glowId, "visibility", visibility);
+      if (map.getLayer(lineId)) map.setLayoutProperty(lineId, "visibility", visibility);
+      if (map.getLayer(pointsId)) {
+        map.setPaintProperty(pointsId, "circle-opacity", visibility === "visible" ? 1 : 0);
+        map.setPaintProperty(pointsId, "circle-stroke-opacity", visibility === "visible" ? 1 : 0);
+      }
+    });
+  }, [compareTrackIds, activeTrackId, tracks, isLoaded]);
 
   // ── Playback: update track source data + move glowing position marker ────────
   useEffect(() => {
