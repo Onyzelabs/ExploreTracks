@@ -8,6 +8,7 @@ import type {
   AnimalTrack,
   FilterState,
   SidebarContent,
+  OpenVideoPanel,
 } from "@/lib/types";
 import { CATEGORY_META, ANIMAL_TYPE_META } from "@/lib/types";
 import { getTerminator } from "@/lib/terminator";
@@ -16,7 +17,7 @@ interface MapContainerProps {
   cameras: ExploreCamera[];
   tracks: AnimalTrack[];
   filter: FilterState;
-  openVideoIds: Set<string>;
+  openVideos: OpenVideoPanel[];
   activeTrackId: string | null;
   /** Set of track IDs to show simultaneously in comparison mode */
   compareTrackIds?: Set<string>;
@@ -62,7 +63,7 @@ const ESRI_SATELLITE_STYLE = {
 
 function buildCameraMarker(
   camera: ExploreCamera,
-  isOpen: boolean,
+  openSlot: number | null,
 ): HTMLElement {
   const meta = CATEGORY_META[camera.category];
   const el = document.createElement("div");
@@ -81,14 +82,16 @@ function buildCameraMarker(
   el.innerHTML = `
     <div class="cam-icon" style="
       width: 40px; height: 40px; border-radius: 50%;
-      background: ${isOpen ? meta.color + "44" : meta.color + "1a"};
-      border: 2.5px solid ${meta.color}${isOpen ? "ff" : "aa"};
+      background: ${openSlot !== null ? meta.color + "44" : meta.color + "1a"};
+      border: 2.5px solid ${meta.color}${openSlot !== null ? "ff" : "aa"};
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; line-height: 1;
-      box-shadow: 0 0 ${isOpen ? 20 : 10}px ${meta.color}${isOpen ? "88" : "44"},
+      box-shadow: 0 0 ${openSlot !== null ? 20 : 10}px ${meta.color}${openSlot !== null ? "88" : "44"};
       transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      color: ${isOpen ? "#fff" : meta.color};
-    ">${renderToString(<meta.icon size={18} strokeWidth={2.5} />)}</div>
+      color: ${openSlot !== null ? "#fff" : meta.color};
+      font-weight: 800;
+      font-family: var(--font-sans);
+    ">${openSlot !== null ? (openSlot + 1).toString() : renderToString(<meta.icon size={18} strokeWidth={2.5} />)}</div>
     <div style="
       position: absolute;
       inset: -8px;
@@ -138,7 +141,7 @@ export default function MapContainer({
   cameras,
   tracks,
   filter,
-  openVideoIds,
+  openVideos,
   activeTrackId,
   compareTrackIds,
   playbackIndex,
@@ -164,6 +167,26 @@ export default function MapContainer({
   const markerPopupRef = useRef<maplibregl.Popup | null>(null);
   // Glowing dot that follows the playback scrubber position
   const playbackMarkerRef = useRef<maplibregl.Marker | null>(null);
+
+  // ── Automatically fly to newly opened cameras ─────────────────────────────
+  const prevOpenVideoIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded) return;
+    
+    for (const v of openVideos) {
+      if (!prevOpenVideoIds.current.has(v.camera.id)) {
+        map.flyTo({
+          center: v.camera.coordinates,
+          zoom: Math.max(map.getZoom() ?? 4, 5),
+          speed: 1.4,
+          essential: true,
+        });
+        break; // Only fly to the first new one if multiple are opened
+      }
+    }
+    prevOpenVideoIds.current = new Set(openVideos.map((v) => v.camera.id));
+  }, [openVideos, isLoaded]);
 
   // ── One-time map init ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -655,7 +678,6 @@ export default function MapContainer({
     if (!map || !isLoaded) return;
 
     cameras.forEach((cam) => {
-      const isOpen = openVideoIds.has(cam.id);
       const search = filter.searchText.toLowerCase();
       const matchesSearch =
         search === "" ||
@@ -663,7 +685,10 @@ export default function MapContainer({
         cam.location.toLowerCase().includes(search);
 
       const shouldShow =
-        filter.cameraCategories.has(cam.category) && matchesSearch;
+        (filter.cameraCategories.size === 0 || filter.cameraCategories.has(cam.category)) && matchesSearch;
+
+      const openVideo = openVideos.find((v) => v.camera.id === cam.id);
+      const openSlot = openVideo ? openVideo.slot : null;
 
       if (camMarkersRef.current.has(cam.id)) {
         // Marker exists — update visibility and open-state styling in-place.
@@ -677,19 +702,28 @@ export default function MapContainer({
         const icon = el.querySelector(".cam-icon") as HTMLElement | null;
         if (icon) {
           const meta = CATEGORY_META[cam.category];
-          icon.style.background = isOpen
+          icon.style.background = openSlot !== null
             ? meta.color + "44"
             : meta.color + "1a";
-          icon.style.borderColor = isOpen ? meta.color : meta.color + "aa";
-          icon.style.boxShadow = isOpen
+          icon.style.borderColor = openSlot !== null ? meta.color : meta.color + "aa";
+          icon.style.boxShadow = openSlot !== null
             ? `0 0 20px ${meta.color}88, 0 0 40px ${meta.color}33`
             : `0 0 10px ${meta.color}44, 0 0 20px ${meta.color}11`;
+          icon.style.color = openSlot !== null ? "#fff" : meta.color;
+          icon.style.fontWeight = "800";
+          icon.style.fontFamily = "var(--font-sans)";
+          
+          if (openSlot !== null) {
+            icon.innerText = (openSlot + 1).toString();
+          } else {
+            icon.innerHTML = renderToString(<meta.icon size={18} strokeWidth={2.5} />);
+          }
         }
         return;
       }
 
       // First time: build marker and add to map
-      const el = buildCameraMarker(cam, isOpen);
+      const el = buildCameraMarker(cam, openSlot);
       el.style.display = shouldShow ? "flex" : "none";
 
       let hideTimeout: NodeJS.Timeout;
@@ -788,7 +822,7 @@ export default function MapContainer({
     cameras,
     filter.cameraCategories,
     filter.searchText,
-    openVideoIds,
+    openVideos,
     isLoaded,
     onOpenCamera,
   ]);

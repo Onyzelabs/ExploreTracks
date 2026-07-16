@@ -370,7 +370,7 @@ export default function Home() {
             cameras={cameras ?? []}
             tracks={tracks ?? []}
             filter={filter}
-            openVideoIds={openVideoIds}
+            openVideos={openVideos}
             activeTrackId={
               sidebarContent?.type === "animal" ? sidebarContent.track.id : null
             }

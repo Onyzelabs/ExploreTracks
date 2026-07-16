@@ -63,6 +63,12 @@ function FloatingVideoPanel({
         className={`${mobile ? "" : "drag-handle"} flex items-center gap-2 px-3 py-2 border-b border-white/5 ${mobile ? "cursor-default" : "cursor-move"} select-none flex-shrink-0`}
         style={{ borderColor: `${meta.color}22` }}
       >
+        <div 
+          className="flex items-center justify-center rounded bg-black/40 text-[10px] font-black w-5 h-5 flex-shrink-0"
+          style={{ color: meta.color, border: `1px solid ${meta.color}44`, fontFamily: "var(--font-sans)" }}
+        >
+          {slot + 1}
+        </div>
         <meta.icon size={16} className="pointer-events-none" />
         <span
           className="text-sm font-bold truncate flex-1"
