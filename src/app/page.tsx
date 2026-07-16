@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { SidebarContent, FilterState, ExploreCamera, OpenVideoPanel, AnimalTrack } from "@/lib/types";
 import { DEFAULT_FILTER } from "@/lib/types";
@@ -10,7 +10,7 @@ import { useCameraNotifications } from "@/lib/useNotifications";
 import AnimalInfo from "@/components/Sidebar/AnimalInfo";
 import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
-import CameraListPanel from "@/components/Camera/CameraListPanel";
+import Link from "next/link";
 import {
   Camera, PawPrint, Play,
   LayoutList, GitBranch,
@@ -80,8 +80,6 @@ export default function Home() {
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   // Weather overlay layer
   const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | null>(null);
-  // Camera list panel visibility
-  const [showCameraList, setShowCameraList] = useState(false);
 
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
   const { subscribe, unsubscribe, isSubscribed } = useCameraNotifications();
@@ -113,6 +111,25 @@ export default function Home() {
       return [...next, { camera, slot: freeSlot }];
     });
   }, []);
+
+  // Handle ?cam=ID auto-open on mount
+  useEffect(() => {
+    if (!cameras || cameras.length === 0) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const camId = params.get("cam");
+      if (camId) {
+        const cam = cameras.find((c) => c.id === camId);
+        if (cam) {
+          handleOpenCamera(cam);
+          // Remove ?cam=ID from URL without reloading
+          window.history.replaceState(null, '', '/');
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [cameras, handleOpenCamera]);
 
   const handleCloseVideo = useCallback((id: string) => {
     setOpenVideos((prev) => prev.filter((p) => p.camera.id !== id));
@@ -248,20 +265,15 @@ export default function Home() {
             </select>
 
             {/* Camera list panel toggle */}
-            <button
-              id="toggle-camera-list"
-              onClick={() => setShowCameraList((v) => !v)}
-              className={`hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
-                showCameraList
-                  ? "bg-orange-500/20 border-orange-500/40 text-orange-400"
-                  : "bg-[var(--color-surface-800)] border-[var(--glass-border)] text-neutral-300 hover:text-white"
-              }`}
+            <Link
+              href="/cameras"
+              className="hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors bg-[var(--color-surface-800)] border-[var(--glass-border)] text-neutral-300 hover:text-white"
               style={{ fontFamily: "var(--font-sans)" }}
               title="Browse all cameras"
             >
               <LayoutList size={15} />
               Cameras
-            </button>
+            </Link>
 
 
             {/* External links — hidden on mobile */}
@@ -292,13 +304,13 @@ export default function Home() {
         {/* Mobile dropdown menu */}
         {showMobileMenu && (
           <div className="sm:hidden flex flex-col gap-3 px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--color-surface-950)]">
-            <button
-              onClick={() => { setShowCameraList(true); setShowMobileMenu(false); }}
+            <Link
+              href="/cameras"
               className="w-full flex items-center justify-center gap-1.5 text-sm py-2 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40"
             >
               <LayoutList size={15} />
               Browse Cameras
-            </button>
+            </Link>
             
             <div className="grid grid-cols-2 gap-2">
               <select
@@ -417,18 +429,6 @@ export default function Home() {
           </aside>
         )}
       </main>
-
-      {/* Camera list panel */}
-      {showCameraList && (
-        <CameraListPanel
-          cameras={cameras ?? []}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-          onOpen={(cam) => { handleOpenCamera(cam); }}
-          onClose={() => setShowCameraList(false)}
-          openVideoIds={openVideoIds}
-        />
-      )}
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-3 opacity-50">
