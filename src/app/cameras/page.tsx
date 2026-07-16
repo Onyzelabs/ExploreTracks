@@ -27,7 +27,7 @@ export default function CamerasPage() {
   }, [cameras, search, showFavOnly, favorites]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface-950)] text-neutral-200">
+    <div className="h-full overflow-y-auto bg-[var(--color-surface-950)] text-neutral-200" style={{ WebkitOverflowScrolling: "touch" }}>
       {/* Header */}
       <header className="sticky top-0 z-30 bg-[var(--color-surface-950)]/80 backdrop-blur-md border-b border-[var(--glass-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
