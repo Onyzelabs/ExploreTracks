@@ -460,11 +460,11 @@ export default function MapContainer({
         // Use the latest past radar frame
         const past = data.radar?.past || [];
         if (past.length === 0) return;
-        const latestTime = past[past.length - 1].time;
+        const latest = past[past.length - 1];
         
         // e.g. https://tilecache.rainviewer.com/v2/radar/1715694000/256/{z}/{x}/{y}/2/1_1.png
         // (color scheme 2, smooth 1, snow 1)
-        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${latestTime}/256/{z}/{x}/{y}/2/1_1.png`;
+        const tileUrl = `${data.host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`;
 
         map.addSource(SRC, {
           type: "raster",
