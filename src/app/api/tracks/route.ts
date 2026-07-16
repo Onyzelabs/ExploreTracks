@@ -49,6 +49,22 @@ function inferAnimalType(species: string): AnimalType {
 
 const MOVEBANK_BASE = "https://www.movebank.org/movebank/service/direct-read";
 
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+async function fetchWithRetry(url: string, init?: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const res = await fetch(url, init);
+    if (res.status === 429) {
+      if (i === retries - 1) return res;
+      // Exponential backoff with jitter: 1s, 2s, 4s...
+      await delay(Math.pow(2, i) * 1000 + Math.random() * 500);
+      continue;
+    }
+    return res;
+  }
+  return fetch(url, init);
+}
+
 // ─── Development seed data ────────────────────────────────────────────────────
 // Used when MOVEBANK_USERNAME / MOVEBANK_STUDY_IDS env vars are not configured.
 const SEED_TRACKS: AnimalTrack[] = [
@@ -255,7 +271,7 @@ async function fetchStudyEvents(
     _cb: Date.now().toString(),
   });
 
-  const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
+  const res = await fetchWithRetry(`${MOVEBANK_BASE}?${params}`, {
     headers: {
       Authorization: authHeader,
       Accept: "application/json",
@@ -326,7 +342,7 @@ async function fetchStudyMeta(
     id: studyId.toString(),
   });
 
-  const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
+  const res = await fetchWithRetry(`${MOVEBANK_BASE}?${params}`, {
     headers: { Authorization: authHeader },
   });
 
@@ -362,7 +378,7 @@ async function fetchStudyIndividuals(
     study_id: studyId.toString(),
   });
 
-  const res = await fetch(`${MOVEBANK_BASE}?${params}`, {
+  const res = await fetchWithRetry(`${MOVEBANK_BASE}?${params}`, {
     headers: { Authorization: authHeader },
   });
 
@@ -521,25 +537,17 @@ const fetchAllTracks = unstable_cache(
     const allTracks: AnimalTrack[] = [];
     let colorOffset = 0;
 
-    // Fetch studies in parallel
-    const results = await Promise.allSettled(
-      studyIds.map(async (studyId) => {
+    // Fetch studies sequentially to avoid triggering HTTP 429 Too Many Requests
+    // Inside each study, the 3 endpoints (meta, events, individuals) are fetched in parallel
+    for (const studyId of studyIds) {
+      try {
         const [meta, events, individuals] = await Promise.all([
           fetchStudyMeta(studyId, authHeader),
           fetchStudyEvents(studyId, authHeader),
           fetchStudyIndividuals(studyId, authHeader),
         ]);
-        return { studyId, studyName: meta.name, events, individuals };
-      }),
-    );
-
-    for (const result of results) {
-      if (result.status === "rejected") {
-        // Log but don't crash — partial data is better than nothing
-        console.error("[/api/tracks] Study fetch failed:", result.reason);
-        continue;
-      }
-      const { studyId, studyName, events, individuals } = result.value;
+        
+        const studyName = meta.name;
       const tracks = groupEventsIntoTracks(
         events,
         individuals,
@@ -549,7 +557,13 @@ const fetchAllTracks = unstable_cache(
       );
       allTracks.push(...tracks);
       colorOffset += tracks.length;
+      
+      // Small delay between studies to be extra safe
+      await delay(300);
+    } catch (err) {
+      console.error("[/api/tracks] Study fetch failed:", err);
     }
+  }
 
     // If Movebank API failed or returned nothing (e.g. rate limits), fallback to seed data
     if (allTracks.length === 0) {
