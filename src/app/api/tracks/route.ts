@@ -447,11 +447,11 @@ function groupEventsIntoTracks(
 
     if (sorted.length === 0) continue;
 
-    // Filter to only show the last 6 months of data for this specific animal
+    // Filter to only show the last year of data for this specific animal
     const latestTimestamp = sorted[sorted.length - 1].timestamp;
-    const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
     const recentSorted = sorted.filter(
-      (e) => e.timestamp >= latestTimestamp - sixMonthsMs,
+      (e) => e.timestamp >= latestTimestamp - oneYearMs,
     );
 
     if (recentSorted.length === 0) continue;

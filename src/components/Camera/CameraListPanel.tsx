@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo } from "react";
+import { Heart, X, Radio, ExternalLink } from "lucide-react";
 import type { ExploreCamera } from "@/lib/types";
 import { CATEGORY_META } from "@/lib/types";
 
@@ -74,21 +75,22 @@ export default function CameraListPanel({
           </div>
           <button
             onClick={() => setShowFavOnly((v) => !v)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
               showFavOnly
                 ? "bg-orange-500/20 text-orange-400 border-orange-500/40"
                 : "bg-white/5 text-neutral-400 border-white/10"
             }`}
             title="Show favorites only"
           >
-            {showFavOnly ? "♥ Favorites" : "♡ Favorites"}
+            <Heart size={12} className={showFavOnly ? "fill-orange-400" : ""} />
+            Favorites
           </button>
           <button
             onClick={onClose}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Close camera list"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -136,7 +138,7 @@ export default function CameraListPanel({
                   {/* Live badge */}
                   {cam.isLive && (
                     <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 border border-red-500/40">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <Radio size={8} className="text-red-400 animate-pulse" />
                       <span className="text-[10px] font-bold text-red-400">LIVE</span>
                     </div>
                   )}
@@ -148,10 +150,13 @@ export default function CameraListPanel({
                   {/* Favorite button */}
                   <button
                     onClick={() => onToggleFavorite(cam.id)}
-                    className="absolute bottom-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 text-base transition-transform hover:scale-110"
+                    className="absolute bottom-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 transition-transform hover:scale-110"
                     aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
                   >
-                    {isFav ? "♥" : "♡"}
+                    <Heart
+                      size={14}
+                      className={isFav ? "text-orange-400 fill-orange-400" : "text-neutral-300"}
+                    />
                   </button>
                 </div>
 

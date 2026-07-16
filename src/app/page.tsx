@@ -11,6 +11,10 @@ import AnimalInfo from "@/components/Sidebar/AnimalInfo";
 import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
 import CameraListPanel from "@/components/Camera/CameraListPanel";
+import {
+  Camera, PawPrint, Play,
+  LayoutList, GitBranch,
+} from "lucide-react";
 
 const MapContainer = dynamic(() => import("@/components/Map/MapContainer"), {
   ssr: false,
@@ -187,16 +191,17 @@ export default function Home() {
           <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-neutral-300" style={{ fontFamily: "var(--font-sans)" }}>
             <div className="w-px h-5 bg-white/10" />
             <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
-              <span className="text-base">📷</span>
+              <Camera size={15} className="text-orange-400" />
               <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
             </div>
             <div className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)]">
-              <span className="text-base">🐾</span>
+              <PawPrint size={15} className="text-cyan-400" />
               <span><CountBadge count={tracks?.length} isLoading={trackLoading} error={trackError} /> tracks</span>
             </div>
             {openVideos.length > 0 && (
               <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-md border border-orange-500/20">
-                <span className="text-orange-400 text-sm">▶ {openVideos.length}/{MAX_OPEN_VIDEOS} open</span>
+                <Play size={13} className="text-orange-400" />
+                <span className="text-orange-400 text-sm">{openVideos.length}/{MAX_OPEN_VIDEOS} open</span>
                 <button
                   onClick={() => setOpenVideos([])}
                   className="ml-1 text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-300 hover:bg-red-500/40 hover:text-white transition-colors"
@@ -256,7 +261,8 @@ export default function Home() {
               style={{ fontFamily: "var(--font-sans)" }}
               title="Browse all cameras"
             >
-              📋 Cameras
+              <LayoutList size={15} />
+              Cameras
             </button>
 
 
@@ -406,13 +412,26 @@ export default function Home() {
       )}
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="absolute bottom-1 right-1 z-10 pointer-events-none flex flex-col items-end opacity-50">
+      <footer className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-3 opacity-50">
         <span
           className="text-xs text-neutral-500 font-medium drop-shadow-md"
           style={{ fontFamily: "var(--font-sans)" }}
         >
-          Map © OpenStreetMap & CartoDB | Telemetry © Movebank | Live Streams © Explore.org
+          Map © CartoDB &amp; OpenStreetMap | Telemetry © Movebank | Streams © Explore.org
         </span>
+        <span className="text-neutral-700">·</span>
+        <span className="text-xs text-neutral-500">Powered by MapLibre · Next.js · YouTube Data API</span>
+        <span className="text-neutral-700">·</span>
+        <a
+          href="https://github.com/Onyzelabs/ExploreTracks"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pointer-events-auto flex items-center gap-1 text-xs text-neutral-400 hover:text-white transition-colors"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          <GitBranch size={13} />
+          GitHub
+        </a>
       </footer>
     </div>
   );

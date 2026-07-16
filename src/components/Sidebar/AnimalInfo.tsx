@@ -21,6 +21,7 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [playbackIdx, setPlaybackIdx] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<0.5 | 1 | 2 | 5>(1);
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Reset playback when track changes
@@ -50,7 +51,7 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
     return () => { active = false; };
   }, [track.species]);
 
-  // Auto-play: advance index every 80ms
+  // Auto-play: advance index every (200 / speed) ms
   useEffect(() => {
     if (!isPlaying) {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current);
@@ -68,12 +69,12 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
       }
       setPlaybackIdx(idx);
       onPlaybackIndex?.(idx);
-    }, 80);
+    }, Math.round(200 / playbackSpeed));
 
     return () => {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current);
     };
-  }, [isPlaying, track.coordinates.length]);
+  }, [isPlaying, track.coordinates.length, playbackSpeed]);
 
   const handleScrub = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const idx = parseInt(e.target.value, 10);
@@ -224,7 +225,7 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handlePlayPause}
               className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
@@ -244,12 +245,22 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
             >
               Reset
             </button>
-            {activePoint && (
-              <span className="ml-auto text-[11px] text-neutral-500 font-mono">
-                {activePoint.latitude.toFixed(3)}°,{" "}
-                {activePoint.longitude.toFixed(3)}°
-              </span>
-            )}
+            {/* Speed selector */}
+            <div className="ml-auto flex items-center gap-1">
+              {([0.5, 1, 2, 5] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setPlaybackSpeed(s)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors border ${
+                    playbackSpeed === s
+                      ? "bg-white/15 text-white border-white/30"
+                      : "bg-transparent text-neutral-600 border-transparent hover:text-neutral-400"
+                  }`}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
