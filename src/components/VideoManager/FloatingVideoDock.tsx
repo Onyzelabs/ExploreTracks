@@ -249,6 +249,7 @@ export default function FloatingVideoDock({ openPanels, onClose }: FloatingVideo
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const check = () => setIsMobile(window.innerWidth < 640);
     check();

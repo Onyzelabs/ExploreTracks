@@ -471,6 +471,9 @@ function groupEventsIntoTracks(
   let i = 0;
 
   for (const [name, evts] of byIndividual.entries()) {
+    // Limit to 15 individuals per study to prevent map domination
+    if (tracks.length >= 15) break;
+
     // Ensure we have valid events
     if (evts.length === 0) continue;
 

@@ -102,9 +102,11 @@ export function useYtChat(
 ) {
   const pageTokenRef = useRef<string | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLiveRef = useRef(false);
+  const [isLive, setIsLive] = useState(false);
   const onMessagesRef = useRef(onMessages);
-  onMessagesRef.current = onMessages;
+  useEffect(() => {
+    onMessagesRef.current = onMessages;
+  }, [onMessages]);
 
   const poll = useCallback(async () => {
     if (!videoId || !enabled) return;
@@ -121,9 +123,9 @@ export function useYtChat(
 
       if (!json.success || !json.data) return;
 
-      const { messages, pollingIntervalMillis, nextPageToken, isLive } =
+      const { messages, pollingIntervalMillis, nextPageToken, isLive: newIsLive } =
         json.data;
-      isLiveRef.current = isLive;
+      setIsLive(newIsLive);
 
       if (nextPageToken) {
         pageTokenRef.current = nextPageToken;
@@ -134,11 +136,13 @@ export function useYtChat(
       }
 
       // Schedule next poll at YouTube-specified interval
-      timerRef.current = setTimeout(poll, pollingIntervalMillis ?? 5000);
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      timerRef.current = setTimeout(() => poll(), pollingIntervalMillis ?? 5000);
     } catch (err) {
       console.error("[useYtChat] Poll failed:", err);
       // Retry after 15s on error to avoid hammering in bad state
-      timerRef.current = setTimeout(poll, 15000);
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      timerRef.current = setTimeout(() => poll(), 15000);
     }
   }, [videoId, enabled]);
 
@@ -154,5 +158,5 @@ export function useYtChat(
     };
   }, [videoId, enabled, poll]);
 
-  return { isLive: isLiveRef.current };
+  return { isLive };
 }

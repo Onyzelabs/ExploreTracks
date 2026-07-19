@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "explore-tracks-favorites";
@@ -9,6 +9,7 @@ export function useFavorites() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       if (raw) setFavorites(new Set(JSON.parse(raw)));
     } catch {}
   }, []);
@@ -16,7 +17,11 @@ export function useFavorites() {
   const toggle = useCallback((id: string) => {
     setFavorites((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...next])); } catch {}
       return next;
     });

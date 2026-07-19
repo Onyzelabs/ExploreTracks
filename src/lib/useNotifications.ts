@@ -26,6 +26,7 @@ export function useCameraNotifications() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const arr: CameraSubscription[] = JSON.parse(raw);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSubscriptions(new Map(arr.map((s) => [s.cameraId, s])));
       }
     } catch {}
