@@ -12,7 +12,7 @@ Live Demo: [explore-tracks.vercel.app](https://explore-tracks.vercel.app)
 - **Live Wildlife Cameras** — Up to 50 concurrent live streams from explore.org, automatically geo-located via a title-keyword dictionary.
   - Desktop: draggable, resizable floating video windows (up to 12 open simultaneously).
   - Mobile: full-width bottom tray with tab switching between open cameras.
-- **Real-Time Animal Tracks** — 6-month GPS movement tracks from Movebank (bears, eagles, sea turtles, elephants, sharks, and more).
+- **Real-Time Animal Tracks** — GPS movement tracks from Movebank (bears, eagles, sea turtles, elephants, sharks). Data is fetched completely offline using a Node script, serving zero-latency static data in production to avoid API rate limits.
 - **Danmaku Overlay** — YouTube Live Chat messages float across the video as danmaku (toggleable, default off).
 - **Global Chat Room** — Desktop: draggable resizable floating window. Mobile: slide-up bottom sheet.
 - **Filter and Search** — Filter by camera category or animal type; free-text search by name or location.
@@ -67,7 +67,7 @@ MOVEBANK_STUDY_IDS=2911040,21231406,9651291
 
 > **Note**: Both services have graceful fallbacks.
 > Without `YOUTUBE_API_KEY` or when the daily quota (100 Search queries) is exhausted, the app falls back to `src/data/seed-cameras.json` — a snapshot of the last successful 50-camera fetch.
-> Without Movebank credentials, the app falls back to 6 curated seed animal tracks.
+> Movebank tracks are always served directly from `src/data/seed-tracks.json`. You only need Movebank credentials when you manually run the script to refresh the data.
 
 ### 4. Run the development server
 
@@ -102,6 +102,17 @@ git commit -m "chore: refresh seed cameras snapshot"
 git push
 ```
 
+### Refresh animal tracking data
+
+Animal tracking data is fetched using an offline script to avoid Movebank API rate limiting and timeouts on user request. When you want to pull new telemetry data, run the following:
+
+```bash
+npm run update-tracks
+git add src/data/seed-tracks.json
+git commit -m "chore: update animal tracks data"
+git push
+```
+
 ---
 
 ## API Quota Notes
@@ -110,7 +121,7 @@ git push
 |---|---|---|
 | YouTube Search | 100 queries | 1 query per cache miss (TTL: 60 min) |
 | YouTube Videos | 10,000 queries | 1 query per open video (danmaku) |
-| Movebank | Rate-limited | Cached for 15 min |
+| Movebank | Rate-limited | 0 at runtime (updated offline via script) |
 
 ---
 
