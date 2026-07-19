@@ -169,7 +169,7 @@ export default function FilterPanel({ filter, onChange }: FilterPanelProps) {
             className="text-sm text-cyan-400 uppercase tracking-wider mb-2 font-semibold mt-4"
             style={{ fontFamily: "var(--font-sans)" }}
           >
-            Movebank Tracks (Telemetry, No Video)
+            Movebank & OBIS Tracks (Telemetry, No Video)
           </p>
           <div className="flex flex-wrap gap-1.5">
             {(

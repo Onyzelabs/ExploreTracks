@@ -50,13 +50,24 @@ export default function TracksPage() {
   const filtered = useMemo(() => {
     if (!tracks) return [];
     const q = search.toLowerCase();
-    return tracks.filter(
+    
+    // Filter
+    const matched = tracks.filter(
       (t) =>
         t.individualName?.toLowerCase().includes(q) ||
         t.commonName?.toLowerCase().includes(q) ||
         t.species?.toLowerCase().includes(q) ||
         t.studyName?.toLowerCase().includes(q)
     );
+    
+    // Sort OBIS data to the top
+    return matched.sort((a, b) => {
+      const aIsObis = a.id.startsWith("obis-") || a.studyName.includes("OBIS");
+      const bIsObis = b.id.startsWith("obis-") || b.studyName.includes("OBIS");
+      if (aIsObis && !bIsObis) return -1;
+      if (!aIsObis && bIsObis) return 1;
+      return 0;
+    });
   }, [tracks, search]);
 
   return (
@@ -74,7 +85,7 @@ export default function TracksPage() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-sans)" }}>
-                Movebank Tracks
+                Movebank & OBIS Tracks
               </h1>
               <p className="text-sm text-neutral-400">
                 {isLoading ? "Loading..." : `${tracks?.length || 0} tracked animals`}
