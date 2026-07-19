@@ -8,14 +8,31 @@
 
 import { withErrorHandler } from "@/lib/api-utils";
 import seedTracks from "@/data/seed-tracks.json";
+import { fetchDynamicObisTracks } from "@/lib/obis";
 
 export const GET = withErrorHandler(async () => {
+  let finalTracks = [...seedTracks] as any[];
+  
+  try {
+    // Attempt to fetch fresh OBIS data dynamically
+    const dynamicObis = await fetchDynamicObisTracks();
+    if (dynamicObis && dynamicObis.length > 0) {
+      // Remove stale static OBIS tracks from seed
+      finalTracks = finalTracks.filter((t: any) => !t.id.startsWith("obis-"));
+      // Append the fresh ones
+      finalTracks.push(...dynamicObis);
+    }
+  } catch (err) {
+    console.error("Dynamic OBIS fetch failed, falling back to static seed data", err);
+    // On failure, finalTracks just uses the original seedTracks (which includes last known OBIS)
+  }
+
   return Response.json(
     {
       success: true,
-      data: seedTracks,
+      data: finalTracks,
       cachedAt: new Date().toISOString(),
-      total: seedTracks.length,
+      total: finalTracks.length,
     },
     {
       headers: {
