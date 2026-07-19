@@ -230,7 +230,13 @@ export default function Home() {
           {/* Stats — hidden on mobile */}
           <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-neutral-300" style={{ fontFamily: "var(--font-sans)" }}>
             <div className="w-px h-5 bg-white/10" />
-
+            <Link
+              href="/cameras"
+              className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
+            >
+              <Camera size={15} className="text-orange-400" />
+              <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
+            </Link>
             <Link
               href="/tracks"
               className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
@@ -287,17 +293,6 @@ export default function Home() {
               <option value="precipitation_new">🌧 Radar</option>
               <option value="terminator">🌗 Day/Night</option>
             </select>
-
-            {/* Camera list panel toggle */}
-            <Link
-              href="/cameras"
-              className="hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors bg-[var(--color-surface-800)] border-[var(--glass-border)] text-neutral-300 hover:text-white"
-              style={{ fontFamily: "var(--font-sans)" }}
-              title="Browse all cameras"
-            >
-              <LayoutList size={15} />
-              Cameras
-            </Link>
 
 
             {/* External links — hidden on mobile */}
