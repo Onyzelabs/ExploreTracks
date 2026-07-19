@@ -215,9 +215,12 @@ export default function MapContainer({
       pitch: 0,
       bearing: 0,
       attributionControl: false,
+      dragRotate: false,
+      touchZoomRotate: false,
+      touchPitch: false,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(
       new maplibregl.AttributionControl({ compact: true }),
       "bottom-right",
