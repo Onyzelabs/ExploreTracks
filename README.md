@@ -21,7 +21,7 @@ Live Demo: [explore-tracks.vercel.app](https://explore-tracks.vercel.app)
 - **Live Wildlife Cameras** — Up to 50 concurrent live streams from explore.org, automatically geo-located via a title-keyword dictionary.
   - Desktop: draggable, resizable floating video windows (up to 12 open simultaneously).
   - Mobile: full-width bottom tray with tab switching between open cameras.
-- **Real-Time Animal Tracks** — GPS movement tracks from Movebank (bears, eagles, sea turtles, elephants, sharks). Data is fetched completely offline using a Node script, serving zero-latency static data in production to avoid API rate limits.
+- **Real-Time Animal Tracks** — GPS movement tracks from Movebank (bears, eagles, etc.) and OBIS (Ocean Biodiversity Information System for marine species like whales, sharks, penguins). Data is dynamically fetched with robust caching and offline static fallbacks to avoid API rate limits.
 - **Danmaku Overlay** — YouTube Live Chat messages float across the video as danmaku (toggleable, default off).
 - **Global Chat Room** — Desktop: draggable resizable floating window. Mobile: slide-up bottom sheet.
 - **Filter and Search** — Filter by camera category or animal type; free-text search by name or location.
@@ -116,7 +116,7 @@ git push
 
 ### Refresh animal tracking data
 
-Animal tracking data is fetched using an offline script to avoid Movebank API rate limiting and timeouts on user request. When you want to pull new telemetry data, run the following:
+Animal tracking data is fetched from the Movebank API and the OBIS API. Because Movebank has aggressive rate limiting, the primary data is baked into a static JSON seed file. The API route will attempt to fetch dynamic OBIS data on the fly, but you can manually update the seed snapshot by running:
 
 ```bash
 npm run update-tracks
