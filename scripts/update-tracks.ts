@@ -11,9 +11,11 @@
  * GPS collar fixes typically arrive every few minutes to hours.
  */
 
-import fs from "fs";
-import path from "path";
-import { z } from "zod";
+import * as z from "zod";
+import * as fs from "fs/promises";
+import * as path from "path";
+import * as readline from "readline";
+import { Readable } from "stream";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config(); // fallback to .env
@@ -54,13 +56,14 @@ const MOVEBANK_BASE = "https://www.movebank.org/movebank/service/direct-read";
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-async function fetchWithRetry(url: string, init?: RequestInit, retries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, init?: RequestInit, retries = 8): Promise<Response> {
   for (let i = 0; i < retries; i++) {
     const res = await fetch(url, init);
     if (res.status === 429) {
       if (i === retries - 1) return res;
-      // Exponential backoff with jitter: 1s, 2s, 4s...
-      await delay(Math.pow(2, i) * 1000 + Math.random() * 500);
+      const waitTime = 10000 * (i + 1) + Math.random() * 2000;
+      console.log(`[HTTP 429] Rate limited by Movebank. Retrying in ${Math.round(waitTime / 1000)}s...`);
+      await delay(waitTime);
       continue;
     }
     return res;
@@ -280,7 +283,6 @@ async function fetchStudyEvents(
     study_id: studyId.toString(),
     attributes:
       "individual_local_identifier,location_long,location_lat,timestamp,ground_speed",
-    max_events_per_individual: "5000",
     _cb: Date.now().toString(),
   });
 
@@ -301,19 +303,31 @@ async function fetchStudyEvents(
     throw new Error(`Movebank returned HTTP ${res.status} for study ${studyId}`);
   }
 
-  const text = await res.text();
-  const lines = text.trim().split("\n");
-  if (lines.length < 2) return [];
+  const raw: Record<string, any>[] = [];
+  const rl = readline.createInterface({
+    input: Readable.fromWeb(res.body as any),
+    crlfDelay: Infinity,
+  });
 
-  const headers = lines[0].split(",").map((h) => h.trim());
-  const raw = lines.slice(1).map((line) => {
+  let headers: string[] = [];
+  let isFirst = true;
+
+  for await (const line of rl) {
+    if (!line.trim()) continue;
+    if (isFirst) {
+      headers = line.split(",").map((h) => h.trim());
+      isFirst = false;
+      continue;
+    }
     const values = parseCsvLine(line);
     const obj: Record<string, any> = {};
     headers.forEach((h, i) => {
       obj[h] = values[i] ? values[i].replace(/^"|"$/g, "") : undefined;
     });
-    return obj;
-  }).filter(obj => obj.location_long && obj.location_lat && obj.individual_local_identifier);
+    if (obj.location_long && obj.location_lat && obj.individual_local_identifier) {
+      raw.push(obj);
+    }
+  }
 
   const parsed = raw.map((item) => MovebankEventSchema.safeParse(item));
   const failed = parsed.filter((r) => !r.success);
@@ -460,19 +474,10 @@ function groupEventsIntoTracks(
 
     if (sorted.length === 0) continue;
 
-    // Filter to only show the last year of data for this specific animal
-    const latestTimestamp = sorted[sorted.length - 1].timestamp;
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
-    const recentSorted = sorted.filter(
-      (e) => e.timestamp >= latestTimestamp - oneYearMs,
-    );
-
-    if (recentSorted.length === 0) continue;
-
-    // Downsample to 1 point per day
-    const dailyPoints: typeof recentSorted = [];
+    // Downsample to 1 point per day across the entire history
+    const dailyPoints: typeof sorted = [];
     const seenDays = new Set<string>();
-    for (const pt of recentSorted) {
+    for (const pt of sorted) {
       // Create YYYY-MM-DD string
       const dateStr = new Date(pt.timestamp).toISOString().split("T")[0];
       if (!seenDays.has(dateStr)) {
@@ -577,7 +582,7 @@ async function main() {
   try {
     const tracks = await fetchAllTracks();
     const outPath = path.join(process.cwd(), "src/data/seed-tracks.json");
-    fs.writeFileSync(outPath, JSON.stringify(tracks, null, 2));
+    await fs.writeFile(outPath, JSON.stringify(tracks, null, 2));
     console.log(`Successfully wrote ${tracks.length} tracks to ${outPath}`);
   } catch (e) {
     console.error("Failed to update tracks:", e);
