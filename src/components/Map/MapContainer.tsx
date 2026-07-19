@@ -192,8 +192,11 @@ export default function MapContainer({
   const prevActiveTrackId = useRef<string | null>(null);
   useEffect(() => {
     const map = mapRef.current;
+    
+    // Only proceed if map is fully loaded and an active track exists
     if (!map || !isLoaded || !activeTrackId) {
-      prevActiveTrackId.current = activeTrackId;
+      // If activeTrackId becomes null, reset our ref so we can fly again if it's selected later
+      if (!activeTrackId) prevActiveTrackId.current = null;
       return;
     }
 
@@ -214,6 +217,7 @@ export default function MapContainer({
           });
         }
       }
+      // Update ref ONLY after we actually attempted to fly
       prevActiveTrackId.current = activeTrackId;
     }
   }, [activeTrackId, tracks, isLoaded]);
