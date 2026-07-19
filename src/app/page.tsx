@@ -230,13 +230,7 @@ export default function Home() {
           {/* Stats — hidden on mobile */}
           <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-neutral-300" style={{ fontFamily: "var(--font-sans)" }}>
             <div className="w-px h-5 bg-white/10" />
-            <Link
-              href="/cameras"
-              className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
-            >
-              <Camera size={15} className="text-orange-400" />
-              <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
-            </Link>
+
             <Link
               href="/tracks"
               className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
