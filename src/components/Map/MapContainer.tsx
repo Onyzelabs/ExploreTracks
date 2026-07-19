@@ -218,6 +218,12 @@ export default function MapContainer({
           zoom: Math.max(map.getZoom() ?? 4, 5),
           speed: 1.4,
           essential: true,
+          padding: {
+            top: 50,
+            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 50,
+            left: 50,
+            right: window.innerWidth > 640 ? 450 : 50,
+          },
         });
         break; // Only fly to the first new one if multiple are opened
       }
@@ -247,7 +253,12 @@ export default function MapContainer({
 
         if (!bounds.isEmpty()) {
           map.fitBounds(bounds, {
-            padding: { top: 100, bottom: 100, left: 100, right: window.innerWidth > 640 ? 450 : 100 },
+            padding: {
+              top: 100,
+              bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 100,
+              left: 100,
+              right: window.innerWidth > 640 ? 450 : 100,
+            },
             duration: 1500,
             essential: true,
             maxZoom: 7,
@@ -877,6 +888,12 @@ export default function MapContainer({
           zoom: Math.max(mapRef.current?.getZoom() ?? 4, 5),
           speed: 1.4,
           essential: true,
+          padding: {
+            top: 50,
+            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 50,
+            left: 50,
+            right: window.innerWidth > 640 ? 450 : 50,
+          },
         });
       });
 
@@ -986,6 +1003,12 @@ export default function MapContainer({
           zoom: 6,
           speed: 1.5,
           essential: true,
+          padding: {
+            top: 100,
+            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 100,
+            left: 100,
+            right: window.innerWidth > 640 ? 450 : 100,
+          },
         });
       });
 
