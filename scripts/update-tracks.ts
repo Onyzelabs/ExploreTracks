@@ -18,6 +18,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config(); // fallback to .env
 import type { AnimalTrack, AnimalType } from "../src/lib/types";
+import { AnimalTrackSchema } from "../src/lib/types";
 
 /**
  * Infer animal type from species/taxon name for filter categorization.
@@ -520,11 +521,7 @@ async function fetchAllTracks(): Promise<AnimalTrack[]> {
       .filter((n) => !isNaN(n));
 
     if (studyIds.length === 0) {
-      throw new ApiError(
-        "MOVEBANK_STUDY_IDS is empty or invalid.",
-        500,
-        "CONFIG_ERROR",
-      );
+      throw new Error("MOVEBANK_STUDY_IDS is empty or invalid.");
     }
 
     const authHeader = movebankAuthHeader();

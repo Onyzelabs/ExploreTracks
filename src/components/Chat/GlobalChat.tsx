@@ -185,7 +185,7 @@ export default function GlobalChat() {
       <button
         id="global-chat-open-btn"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-cyan-600/90 hover:bg-cyan-500/90 border border-cyan-400/50 text-white shadow-xl shadow-cyan-900/20 transition-all font-semibold"
+        className="fixed top-24 left-4 sm:top-auto sm:bottom-6 sm:left-6 z-50 flex items-center gap-2 p-3 sm:px-4 sm:py-3 rounded-full bg-cyan-600/90 hover:bg-cyan-500/90 border border-cyan-400/50 text-white shadow-xl shadow-cyan-900/20 transition-all font-semibold"
         style={{ fontFamily: "var(--font-sans)" }}
       >
         <span>💬</span>
