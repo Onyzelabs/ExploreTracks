@@ -690,7 +690,7 @@ export default function MapContainer({
         cam.location.toLowerCase().includes(search);
 
       const shouldShow =
-        (filter.cameraCategories.size === 0 || filter.cameraCategories.has(cam.category)) && matchesSearch;
+        filter.cameraCategories.has(cam.category) && matchesSearch;
 
       const openVideo = openVideos.find((v) => v.camera.id === cam.id);
       const openSlot = openVideo ? openVideo.slot : null;
