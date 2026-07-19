@@ -407,7 +407,7 @@ export default function Home() {
         {sidebarContent?.type === "animal" && (
           <aside
             id="animal-sidebar"
-            className="absolute sm:relative right-0 flex-shrink-0 w-full sm:w-[340px] h-full z-30 sm:z-10 anim-slide-right overflow-hidden shadow-2xl sm:shadow-none bg-[var(--color-surface-900)]"
+            className="absolute sm:relative bottom-0 sm:bottom-auto right-0 flex-shrink-0 w-full sm:w-[340px] h-[55vh] sm:h-full z-30 sm:z-10 anim-slide-up sm:anim-slide-right overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] sm:shadow-none bg-[var(--color-surface-900)] rounded-t-2xl sm:rounded-none flex flex-col"
           >
             <AnimalInfo
               track={sidebarContent.track}
@@ -420,7 +420,7 @@ export default function Home() {
         {sidebarContent?.type === "compare" && (
           <aside
             id="compare-sidebar"
-            className="absolute sm:relative right-0 flex-shrink-0 w-full sm:w-[360px] h-full z-30 sm:z-10 anim-slide-right overflow-hidden shadow-2xl sm:shadow-none bg-[var(--color-surface-900)]"
+            className="absolute sm:relative bottom-0 sm:bottom-auto right-0 flex-shrink-0 w-full sm:w-[360px] h-[60vh] sm:h-full z-30 sm:z-10 anim-slide-up sm:anim-slide-right overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] sm:shadow-none bg-[var(--color-surface-900)] rounded-t-2xl sm:rounded-none flex flex-col"
           >
             <TrackComparePanel
               tracks={tracks ?? []}
