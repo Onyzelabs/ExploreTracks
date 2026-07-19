@@ -275,19 +275,12 @@ async function fetchStudyEvents(
   studyId: number,
   authHeader: string,
 ): Promise<MovebankEvent[]> {
-  // Fetch only the last 6 months of data to avoid massive payloads
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  // Movebank expects yyyyMMddHHmmss000 format
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const tsStart = `${sixMonthsAgo.getFullYear()}${pad(sixMonthsAgo.getMonth() + 1)}${pad(sixMonthsAgo.getDate())}${pad(sixMonthsAgo.getHours())}${pad(sixMonthsAgo.getMinutes())}${pad(sixMonthsAgo.getSeconds())}000`;
-
   const params = new URLSearchParams({
     entity_type: "event",
     study_id: studyId.toString(),
     attributes:
       "individual_local_identifier,location_long,location_lat,timestamp,ground_speed",
-    timestamp_start: tsStart,
+    max_events_per_individual: "5000",
     _cb: Date.now().toString(),
   });
 
@@ -476,7 +469,21 @@ function groupEventsIntoTracks(
 
     if (recentSorted.length === 0) continue;
 
-    const last = recentSorted[recentSorted.length - 1];
+    // Downsample to 1 point per day
+    const dailyPoints: typeof recentSorted = [];
+    const seenDays = new Set<string>();
+    for (const pt of recentSorted) {
+      // Create YYYY-MM-DD string
+      const dateStr = new Date(pt.timestamp).toISOString().split("T")[0];
+      if (!seenDays.has(dateStr)) {
+        seenDays.add(dateStr);
+        dailyPoints.push(pt);
+      }
+    }
+
+    if (dailyPoints.length === 0) continue;
+
+    const last = dailyPoints[dailyPoints.length - 1];
 
     // Resolve real species and name from individual metadata
     const meta = individuals.get(name);
@@ -495,9 +502,9 @@ function groupEventsIntoTracks(
       studyName,
       color: getColor(colorOffset + i),
       animalType: inferAnimalType(species),
-      coordinates: recentSorted,
-      currentPosition: [last.longitude, last.latitude] as [number, number],
-      tags: [species],
+      tags: [inferAnimalType(species), "wildlife"],
+      currentPosition: [last.longitude, last.latitude],
+      coordinates: dailyPoints,
     });
 
     if (parsed.success) {
@@ -536,16 +543,14 @@ async function fetchAllTracks(): Promise<AnimalTrack[]> {
     const allTracks: AnimalTrack[] = [];
     let colorOffset = 0;
 
-    // Fetch studies sequentially to avoid triggering HTTP 429 Too Many Requests
-    // Inside each study, the 3 endpoints (meta, events, individuals) are fetched in parallel
     for (const studyId of studyIds) {
       try {
-        const [meta, events, individuals] = await Promise.all([
-          fetchStudyMeta(studyId, authHeader),
-          fetchStudyEvents(studyId, authHeader),
-          fetchStudyIndividuals(studyId, authHeader),
-        ]);
-        
+        // Fetch sequentially to strictly avoid HTTP 429 Too Many Requests
+        const meta = await fetchStudyMeta(studyId, authHeader);
+        await delay(2000);
+        const individuals = await fetchStudyIndividuals(studyId, authHeader);
+        await delay(2000);
+        const events = await fetchStudyEvents(studyId, authHeader);
         const studyName = meta.name;
       const tracks = groupEventsIntoTracks(
         events,
@@ -557,8 +562,8 @@ async function fetchAllTracks(): Promise<AnimalTrack[]> {
       allTracks.push(...tracks);
       colorOffset += tracks.length;
       
-      // Small delay between studies to be extra safe
-      await delay(300);
+      // Delay between studies to be extra safe
+      await delay(3000);
     } catch (err) {
       console.error("[/api/tracks] Study fetch failed:", err);
     }
