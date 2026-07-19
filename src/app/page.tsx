@@ -7,6 +7,8 @@ import { DEFAULT_FILTER } from "@/lib/types";
 import { useCameras, useTracks } from "@/lib/hooks";
 import { useFavorites } from "@/lib/useFavorites";
 import { useCameraNotifications } from "@/lib/useNotifications";
+import { useMobileSidebarDrag } from "@/lib/useMobileSidebarDrag";
+import ResizableMobileSidebar from "@/components/Sidebar/ResizableMobileSidebar";
 import AnimalInfo from "@/components/Sidebar/AnimalInfo";
 import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
@@ -87,6 +89,8 @@ export default function Home() {
   const { cameras, isLoading: camLoading, error: camError } = useCameras();
   const { tracks, isLoading: trackLoading, error: trackError } = useTracks();
 
+  const { heightVh, isDragging, handleTouchStart, resetHeight } = useMobileSidebarDrag(55);
+
   const openVideoIds = useMemo(
     () => new Set(openVideos.map((p) => p.camera.id)),
     [openVideos],
@@ -161,7 +165,8 @@ export default function Home() {
   const handleSelectAnimal = useCallback((content: SidebarContent) => {
     setSidebarContent(content);
     setPlaybackIndex(null); // Reset playback when switching animals
-  }, []);
+    resetHeight();
+  }, [resetHeight]);
 
   const handleCloseSidebar = useCallback(() => {
     setSidebarContent(null);
@@ -181,7 +186,8 @@ export default function Home() {
     });
     setSidebarContent({ type: "compare", trackIds: new Set() });
     setPlaybackIndex(null);
-  }, []);
+    resetHeight();
+  }, [resetHeight]);
 
   const handleToggleCompareTrack = useCallback((id: string) => {
     setCompareIds((prev) => {
@@ -403,9 +409,12 @@ export default function Home() {
       <main className="flex flex-1 min-h-0 relative">
         {/* Full-screen map */}
         <div 
-          className={`flex-1 min-w-0 relative transition-all duration-300 ${
-            sidebarContent ? "pb-[60vh] sm:pb-0" : ""
-          }`}
+          className="flex-1 min-w-0 relative transition-[padding] duration-200"
+          style={{
+            paddingBottom: typeof window !== "undefined" && window.innerWidth <= 640 && sidebarContent 
+              ? `${heightVh}vh` 
+              : "0"
+          }}
         >
           <MapContainer
             key={mapStyle}
@@ -447,9 +456,11 @@ export default function Home() {
 
         {/* Right sidebar — animal info OR compare panel */}
         {sidebarContent?.type === "animal" && (
-          <aside
+          <ResizableMobileSidebar
             id="animal-sidebar"
-            className="absolute sm:relative bottom-0 sm:bottom-auto right-0 flex-shrink-0 w-full sm:w-[340px] h-[55vh] sm:h-full z-30 sm:z-10 anim-slide-up sm:anim-slide-right overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] sm:shadow-none bg-[var(--color-surface-900)] rounded-t-2xl sm:rounded-none flex flex-col"
+            heightVh={heightVh}
+            isDragging={isDragging}
+            onTouchStart={handleTouchStart}
           >
             <AnimalInfo
               track={sidebarContent.track}
@@ -457,12 +468,14 @@ export default function Home() {
               onPlaybackIndex={handlePlaybackIndex}
               onCompare={handleCompare}
             />
-          </aside>
+          </ResizableMobileSidebar>
         )}
         {sidebarContent?.type === "compare" && (
-          <aside
+          <ResizableMobileSidebar
             id="compare-sidebar"
-            className="absolute sm:relative bottom-0 sm:bottom-auto right-0 flex-shrink-0 w-full sm:w-[360px] h-[60vh] sm:h-full z-30 sm:z-10 anim-slide-up sm:anim-slide-right overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.6)] sm:shadow-none bg-[var(--color-surface-900)] rounded-t-2xl sm:rounded-none flex flex-col"
+            heightVh={heightVh}
+            isDragging={isDragging}
+            onTouchStart={handleTouchStart}
           >
             <TrackComparePanel
               tracks={tracks ?? []}
@@ -470,7 +483,7 @@ export default function Home() {
               onToggleTrack={handleToggleCompareTrack}
               onClose={handleCloseCompare}
             />
-          </aside>
+          </ResizableMobileSidebar>
         )}
       </main>
 
