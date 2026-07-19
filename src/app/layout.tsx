@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="h-full bg-neutral-950 text-neutral-100 antialiased overflow-hidden">
         {children}
       </body>
+      <GoogleAnalytics gaId="G-7XNBRNRBC6" />
     </html>
   );
 }
