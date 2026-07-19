@@ -327,8 +327,8 @@ async function fetchStudyEvents(
     headers.forEach((h, i) => {
       obj[h] = values[i] ? values[i].replace(/^"|"$/g, "") : undefined;
     });
-    if (obj.location_long && obj.location_lat && obj.individual_local_identifier && obj.timestamp) {
-      const indId = obj.individual_local_identifier;
+    if (obj.location_long && obj.location_lat && (obj.individual_local_identifier || obj.individual_id) && obj.timestamp) {
+      const indId = obj.individual_local_identifier || obj.individual_id;
       const dateStr = obj.timestamp.substring(0, 10); // Extract YYYY-MM-DD
 
       let seenDays = seenDaysByInd.get(indId);
@@ -339,6 +339,8 @@ async function fetchStudyEvents(
 
       if (!seenDays.has(dateStr)) {
         seenDays.add(dateStr);
+        // Ensure individual_local_identifier is set for the schema validator
+        obj.individual_local_identifier = indId;
         raw.push(obj);
       }
     }
@@ -426,11 +428,14 @@ async function fetchStudyIndividuals(
   const taxonIdx = headers.indexOf("taxon_canonical_name");
   const nickIdx = headers.indexOf("nick_name");
 
-  if (localIdIdx === -1) return map;
+  const idIdx = headers.indexOf("id");
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCsvLine(lines[i]);
-    const localId = values[localIdIdx]?.replace(/^"|"$/g, "");
+    let localId = localIdIdx !== -1 ? values[localIdIdx]?.replace(/^"|"$/g, "") : undefined;
+    if (!localId && idIdx !== -1) {
+      localId = values[idIdx]?.replace(/^"|"$/g, "");
+    }
     if (!localId) continue;
 
     const taxon =
@@ -460,6 +465,7 @@ function groupEventsIntoTracks(
   colorOffset: number,
 ): AnimalTrack[] {
   const byIndividual = new Map<string, MovebankEvent[]>();
+  console.log(`[DEBUG] groupEventsIntoTracks for ${studyId} received ${events.length} events, ${individuals.size} individuals`);
 
   for (const evt of events) {
     const key = evt.individual_local_identifier;
@@ -469,6 +475,7 @@ function groupEventsIntoTracks(
 
   const tracks: AnimalTrack[] = [];
   let i = 0;
+  console.log(`[DEBUG] Grouped into ${byIndividual.size} individuals.`);
 
   for (const [name, evts] of byIndividual.entries()) {
     // Limit to 15 individuals per study to prevent map domination
@@ -601,7 +608,7 @@ async function main() {
     const tracks = await fetchAllTracks();
     const outPath = path.join(process.cwd(), "src/data/seed-tracks.json");
     await fs.writeFile(outPath, JSON.stringify(tracks, null, 2));
-    console.log(`Successfully wrote ${tracks.length} tracks to ${outPath}`);
+    console.log(`Successfully wrote ${tracks.length} Movebank tracks to ${outPath}`);
   } catch (e) {
     console.error("Failed to update tracks:", e);
     process.exit(1);

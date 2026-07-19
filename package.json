@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "update-tracks": "tsx scripts/update-tracks.ts"
+    "update-tracks": "tsx scripts/update-tracks.ts && tsx scripts/fetch-obis.ts"
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.6",
