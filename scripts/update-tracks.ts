@@ -312,6 +312,9 @@ async function fetchStudyEvents(
   let headers: string[] = [];
   let isFirst = true;
 
+  // Track seen days per individual to downsample during stream parsing (prevents OOM)
+  const seenDaysByInd = new Map<string, Set<string>>();
+
   for await (const line of rl) {
     if (!line.trim()) continue;
     if (isFirst) {
@@ -324,8 +327,20 @@ async function fetchStudyEvents(
     headers.forEach((h, i) => {
       obj[h] = values[i] ? values[i].replace(/^"|"$/g, "") : undefined;
     });
-    if (obj.location_long && obj.location_lat && obj.individual_local_identifier) {
-      raw.push(obj);
+    if (obj.location_long && obj.location_lat && obj.individual_local_identifier && obj.timestamp) {
+      const indId = obj.individual_local_identifier;
+      const dateStr = obj.timestamp.substring(0, 10); // Extract YYYY-MM-DD
+
+      let seenDays = seenDaysByInd.get(indId);
+      if (!seenDays) {
+        seenDays = new Set<string>();
+        seenDaysByInd.set(indId, seenDays);
+      }
+
+      if (!seenDays.has(dateStr)) {
+        seenDays.add(dateStr);
+        raw.push(obj);
+      }
     }
   }
 
