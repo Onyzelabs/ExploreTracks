@@ -27,12 +27,21 @@ function AnimalImage({ species, color }: { species: string; color: string }) {
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={imgUrl}
-      alt={species}
-      className="w-full h-32 object-cover"
-    />
+    <div className="relative w-full h-32 bg-black/50 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imgUrl}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125"
+        aria-hidden="true"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imgUrl}
+        alt={species}
+        className="relative w-full h-full object-contain drop-shadow-2xl"
+      />
+    </div>
   );
 }
 
