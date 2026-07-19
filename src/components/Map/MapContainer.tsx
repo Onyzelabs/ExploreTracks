@@ -188,6 +188,36 @@ export default function MapContainer({
     prevOpenVideoIds.current = new Set(openVideos.map((v) => v.camera.id));
   }, [openVideos, isLoaded]);
 
+  // ── Automatically fly to active track ───────────────────────────────────────
+  const prevActiveTrackId = useRef<string | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoaded || !activeTrackId) {
+      prevActiveTrackId.current = activeTrackId;
+      return;
+    }
+
+    if (activeTrackId !== prevActiveTrackId.current) {
+      const track = tracks.find((t) => t.id === activeTrackId);
+      if (track && track.coordinates.length > 0) {
+        const bounds = new maplibregl.LngLatBounds();
+        track.coordinates.forEach((c) => {
+          bounds.extend([c.longitude, c.latitude]);
+        });
+
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, {
+            padding: { top: 100, bottom: 100, left: 100, right: window.innerWidth > 640 ? 450 : 100 },
+            duration: 1500,
+            essential: true,
+            maxZoom: 7,
+          });
+        }
+      }
+      prevActiveTrackId.current = activeTrackId;
+    }
+  }, [activeTrackId, tracks, isLoaded]);
+
   // ── One-time map init ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -423,21 +453,6 @@ export default function MapContainer({
           const clickedTrack = tracks.find((t) => t.id === props.trackId);
           if (clickedTrack) {
             onSelectAnimal({ type: "animal", track: clickedTrack });
-
-            // Zoom to track bounds
-            const bounds = new maplibregl.LngLatBounds();
-            clickedTrack.coordinates.forEach((c) => {
-              bounds.extend([c.longitude, c.latitude]);
-            });
-
-            if (!bounds.isEmpty()) {
-              map.fitBounds(bounds, {
-                padding: { top: 100, bottom: 100, left: 100, right: 450 },
-                duration: 1500,
-                essential: true,
-                maxZoom: 7,
-              });
-            }
           }
         };
 
