@@ -112,24 +112,47 @@ export default function Home() {
     });
   }, []);
 
-  // Handle ?cam=ID auto-open on mount
+  // Handle ?cam=ID and ?track=ID auto-open on mount
   useEffect(() => {
-    if (!cameras || cameras.length === 0) return;
     try {
       const params = new URLSearchParams(window.location.search);
+      let changed = false;
+
+      // Handle Camera
       const camId = params.get("cam");
-      if (camId) {
+      if (camId && cameras && cameras.length > 0) {
         const cam = cameras.find((c) => c.id === camId);
         if (cam) {
           handleOpenCamera(cam);
-          // Remove ?cam=ID from URL without reloading
-          window.history.replaceState(null, '', '/');
+          params.delete("cam");
+          changed = true;
         }
+      }
+
+      // Handle Track
+      const trackId = params.get("track");
+      if (trackId && tracks && tracks.length > 0) {
+        const track = tracks.find((t) => t.id === trackId);
+        if (track) {
+          // We can't directly call handleSelectAnimal here if it's defined after, 
+          // but handleSelectAnimal is just setting state. Let's use setSidebarContent directly.
+          setSidebarContent({ type: "animal", track });
+          setPlaybackIndex(null);
+          params.delete("track");
+          changed = true;
+        }
+      }
+
+      // Clean up URL if we handled anything
+      if (changed) {
+        const newSearch = params.toString();
+        const newUrl = newSearch ? `/?${newSearch}` : '/';
+        window.history.replaceState(null, '', newUrl);
       }
     } catch (e) {
       // ignore
     }
-  }, [cameras, handleOpenCamera]);
+  }, [cameras, tracks, handleOpenCamera]);
 
   const handleCloseVideo = useCallback((id: string) => {
     setOpenVideos((prev) => prev.filter((p) => p.camera.id !== id));
