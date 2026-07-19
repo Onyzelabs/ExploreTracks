@@ -72,6 +72,9 @@ YOUTUBE_API_KEY=your_youtube_api_key
 MOVEBANK_USERNAME=your_movebank_username
 MOVEBANK_PASSWORD=your_movebank_password
 MOVEBANK_STUDY_IDS=2911040,21231406,9651291
+
+# Google Analytics Measurement ID (Optional)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
 > **Note**: Both services have graceful fallbacks.
