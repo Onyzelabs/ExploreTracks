@@ -216,9 +216,11 @@ export default function MapContainer({
       bearing: 0,
       attributionControl: false,
       dragRotate: false,
-      touchZoomRotate: false,
       touchPitch: false,
     });
+
+    // Disable two-finger rotation but KEEP two-finger pinch-to-zoom
+    map.touchZoomRotate.disableRotation();
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(
