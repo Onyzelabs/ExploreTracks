@@ -11,7 +11,6 @@ import AnimalInfo from "@/components/Sidebar/AnimalInfo";
 import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
 import AnimalListPanel from "@/components/Animal/AnimalListPanel";
-import CameraListPanel from "@/components/Camera/CameraListPanel";
 import Link from "next/link";
 import {
   Camera, PawPrint, Play,
@@ -84,7 +83,6 @@ export default function Home() {
   const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | "terminator" | null>(null);
   
   const [isAnimalListOpen, setIsAnimalListOpen] = useState(false);
-  const [isCameraListOpen, setIsCameraListOpen] = useState(false);
 
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
   const { subscribe, unsubscribe, isSubscribed } = useCameraNotifications();
@@ -235,13 +233,13 @@ export default function Home() {
           {/* Stats — hidden on mobile */}
           <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-neutral-300" style={{ fontFamily: "var(--font-sans)" }}>
             <div className="w-px h-5 bg-white/10" />
-            <button
-              onClick={() => setIsCameraListOpen(true)}
+            <Link
+              href="/cameras"
               className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
             >
               <Camera size={15} className="text-orange-400" />
               <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
-            </button>
+            </Link>
             <button
               onClick={() => setIsAnimalListOpen(true)}
               className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
@@ -474,23 +472,6 @@ export default function Home() {
             setIsAnimalListOpen(false);
           }}
           onClose={() => setIsAnimalListOpen(false)}
-        />
-      )}
-
-      {isCameraListOpen && cameras && (
-        <CameraListPanel
-          cameras={cameras}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-          onOpen={(cam) => {
-            setOpenVideos((prev) => {
-              if (prev.length >= MAX_OPEN_VIDEOS) return prev;
-              return [...prev, cam.id];
-            });
-            setIsCameraListOpen(false);
-          }}
-          onClose={() => setIsCameraListOpen(false)}
-          openVideoIds={new Set(openVideos)}
         />
       )}
 

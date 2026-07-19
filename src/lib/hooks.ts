@@ -12,7 +12,7 @@
 
 import useSWR from "swr";
 import useSWRImmutable from "swr/immutable";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import type { ExploreCamera, AnimalTrack, LiveChatMessage } from "@/lib/types";
 
 // ─── Generic fetcher ─────────────────────────────────────────────────────────

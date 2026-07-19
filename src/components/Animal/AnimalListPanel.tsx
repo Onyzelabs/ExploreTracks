@@ -1,14 +1,39 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Search, X, Map, HelpCircle } from "lucide-react";
 import type { AnimalTrack } from "@/lib/types";
 import { ANIMAL_TYPE_META } from "@/lib/types";
-import { Search, X, Map } from "lucide-react";
+import { useWikipediaImage } from "@/lib/useWikipediaImage";
 
 interface AnimalListPanelProps {
   tracks: AnimalTrack[];
   onSelect: (track: AnimalTrack) => void;
   onClose: () => void;
+}
+
+function AnimalImage({ species, color }: { species: string; color: string }) {
+  const imgUrl = useWikipediaImage(species);
+
+  if (!imgUrl) {
+    return (
+      <div
+        className="w-full h-32 flex items-center justify-center opacity-30"
+        style={{ backgroundColor: color + "22" }}
+      >
+        <HelpCircle size={32} color={color} />
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imgUrl}
+      alt={species}
+      className="w-full h-32 object-cover"
+    />
+  );
 }
 
 export default function AnimalListPanel({
@@ -75,30 +100,31 @@ export default function AnimalListPanel({
                   key={track.id}
                   className="flex flex-col rounded-2xl border border-[var(--glass-border)] bg-[var(--color-surface-800)] hover:border-cyan-500/30 transition-all group overflow-hidden"
                 >
+                  {/* Animal Image */}
+                  <div className="relative w-full h-32 bg-black/40 overflow-hidden">
+                    <AnimalImage species={track.species} color={meta.color} />
+                    <div
+                      className="absolute top-2 right-2 w-3 h-3 rounded-full border border-black/50 shadow-sm"
+                      style={{ backgroundColor: track.color }}
+                      title="Track color"
+                    />
+                    <div
+                      className="absolute bottom-2 left-2 w-8 h-8 flex items-center justify-center rounded-full shadow-lg backdrop-blur-md"
+                      style={{ background: meta.color + "dd", color: "#000" }}
+                    >
+                      <Icon size={16} />
+                    </div>
+                  </div>
+
                   <div className="p-4 flex flex-col flex-1">
-                    {/* Top Row: Icon + Names */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full shadow-lg backdrop-blur-md"
-                          style={{ background: meta.color + "dd", color: "#000" }}
-                        >
-                          <Icon size={20} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-base font-bold text-white truncate">
-                            {track.individualName || track.commonName || "Unknown"}
-                          </h3>
-                          <p className="text-sm text-neutral-400 truncate">
-                            {track.species}
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className="w-3 h-3 flex-shrink-0 rounded-full border border-black/50 shadow-sm mt-1 ml-2"
-                        style={{ backgroundColor: track.color }}
-                        title="Track color"
-                      />
+                    {/* Names */}
+                    <div className="mb-2">
+                      <h3 className="text-base font-bold text-white truncate">
+                        {track.individualName || track.commonName || "Unknown"}
+                      </h3>
+                      <p className="text-sm text-neutral-400 truncate">
+                        {track.species}
+                      </p>
                     </div>
 
                     <div className="flex-1 mb-4">
