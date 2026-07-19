@@ -401,7 +401,10 @@ export default function MapContainer({
 
             map.getCanvas().style.cursor = "pointer";
 
-            const timeStr = new Date(props.timestamp).toLocaleString();
+            // If timestamp is string or number, ensure we construct Date correctly
+            const ts = Number(props.timestamp);
+            const timeStr = !isNaN(ts) ? new Date(ts).toLocaleString() : "Unknown Date";
+
             const speedStr =
               props.speed != null ? `<br>Speed: ${props.speed} m/s` : "";
 

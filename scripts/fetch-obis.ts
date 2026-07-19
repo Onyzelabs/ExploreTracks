@@ -84,11 +84,19 @@ async function main() {
 
       // Map to coordinates
       const coordinates = bestGroup
-        .map((t) => ({
-          longitude: typeof t.decimalLongitude === "string" ? parseFloat(t.decimalLongitude) : t.decimalLongitude!,
-          latitude: typeof t.decimalLatitude === "string" ? parseFloat(t.decimalLatitude) : t.decimalLatitude!,
-          timestamp: t.eventDate ? new Date(t.eventDate).getTime() : Date.now() - Math.random() * 1000000,
-        }))
+        .map((t) => {
+          let ts = Date.now() - Math.random() * 1000000;
+          if (t.eventDate) {
+            const firstDateStr = String(t.eventDate).split("/")[0];
+            const parsed = new Date(firstDateStr).getTime();
+            if (!isNaN(parsed)) ts = parsed;
+          }
+          return {
+            longitude: typeof t.decimalLongitude === "string" ? parseFloat(t.decimalLongitude) : t.decimalLongitude!,
+            latitude: typeof t.decimalLatitude === "string" ? parseFloat(t.decimalLatitude) : t.decimalLatitude!,
+            timestamp: ts,
+          };
+        })
         .sort((a, b) => a.timestamp - b.timestamp)
         // Keep max 50 points so it's a nice trail
         .slice(-50);
