@@ -311,15 +311,27 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
           </div>
         </div>
 
-        <a
-          id={`movebank-link-${track.id}`}
-          href="https://www.movebank.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 w-full flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
-        >
-          View on Movebank <ExternalLink size={12} />
-        </a>
+        {track.id.startsWith("obis-") ? (
+          <a
+            id={`obis-link-${track.id}`}
+            href={`https://obis.org/advancedsearch?scientificname=${encodeURIComponent(track.species)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
+          >
+            View Species on OBIS <ExternalLink size={12} />
+          </a>
+        ) : (
+          <a
+            id={`movebank-link-${track.id}`}
+            href={`https://www.movebank.org/cms/webapp?env=echo&study_id=${track.studyId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
+          >
+            View Study on Movebank <ExternalLink size={12} />
+          </a>
+        )}
       </div>
     </div>
   );
