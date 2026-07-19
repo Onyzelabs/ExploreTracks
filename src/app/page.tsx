@@ -323,13 +323,22 @@ export default function Home() {
         {/* Mobile dropdown menu */}
         {showMobileMenu && (
           <div className="sm:hidden flex flex-col gap-3 px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--color-surface-950)]">
-            <Link
-              href="/cameras"
-              className="w-full flex items-center justify-center gap-1.5 text-sm py-2 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40"
-            >
-              <LayoutList size={15} />
-              Browse Cameras
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href="/cameras"
+                className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40"
+              >
+                <LayoutList size={15} />
+                Browse Cameras
+              </Link>
+              <Link
+                href="/tracks"
+                className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
+              >
+                <PawPrint size={15} />
+                Browse Tracks
+              </Link>
+            </div>
             
             <div className="grid grid-cols-2 gap-2">
               <select
