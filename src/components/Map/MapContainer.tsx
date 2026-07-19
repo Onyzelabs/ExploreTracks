@@ -220,7 +220,7 @@ export default function MapContainer({
           essential: true,
           padding: {
             top: 50,
-            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 50,
+            bottom: 50,
             left: 50,
             right: window.innerWidth > 640 ? 450 : 50,
           },
@@ -255,7 +255,7 @@ export default function MapContainer({
           map.fitBounds(bounds, {
             padding: {
               top: 100,
-              bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 100,
+              bottom: 100,
               left: 100,
               right: window.innerWidth > 640 ? 450 : 100,
             },
@@ -890,7 +890,7 @@ export default function MapContainer({
           essential: true,
           padding: {
             top: 50,
-            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 50,
+            bottom: 50,
             left: 50,
             right: window.innerWidth > 640 ? 450 : 50,
           },
@@ -1005,7 +1005,7 @@ export default function MapContainer({
           essential: true,
           padding: {
             top: 100,
-            bottom: window.innerWidth <= 640 ? window.innerHeight * 0.6 : 100,
+            bottom: 100,
             left: 100,
             right: window.innerWidth > 640 ? 450 : 100,
           },

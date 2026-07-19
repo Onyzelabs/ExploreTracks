@@ -402,7 +402,11 @@ export default function Home() {
       {/* ── Main ────────────────────────────────────────────────────────── */}
       <main className="flex flex-1 min-h-0 relative">
         {/* Full-screen map */}
-        <div className="flex-1 min-w-0 relative">
+        <div 
+          className={`flex-1 min-w-0 relative transition-all duration-300 ${
+            sidebarContent ? "pb-[60vh] sm:pb-0" : ""
+          }`}
+        >
           <MapContainer
             key={mapStyle}
             cameras={cameras ?? []}
