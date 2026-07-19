@@ -275,11 +275,19 @@ async function fetchStudyEvents(
   studyId: number,
   authHeader: string,
 ): Promise<MovebankEvent[]> {
+  // Fetch only the last 6 months of data to avoid massive payloads
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  // Movebank expects yyyyMMddHHmmss000 format
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const tsStart = `${sixMonthsAgo.getFullYear()}${pad(sixMonthsAgo.getMonth() + 1)}${pad(sixMonthsAgo.getDate())}${pad(sixMonthsAgo.getHours())}${pad(sixMonthsAgo.getMinutes())}${pad(sixMonthsAgo.getSeconds())}000`;
+
   const params = new URLSearchParams({
     entity_type: "event",
     study_id: studyId.toString(),
     attributes:
       "individual_local_identifier,location_long,location_lat,timestamp,ground_speed",
+    timestamp_start: tsStart,
     _cb: Date.now().toString(),
   });
 
@@ -312,7 +320,7 @@ async function fetchStudyEvents(
       obj[h] = values[i] ? values[i].replace(/^"|"$/g, "") : undefined;
     });
     return obj;
-  });
+  }).filter(obj => obj.location_long && obj.location_lat && obj.individual_local_identifier);
 
   const parsed = raw.map((item) => MovebankEventSchema.safeParse(item));
   const failed = parsed.filter((r) => !r.success);
