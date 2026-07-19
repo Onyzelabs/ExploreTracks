@@ -4,6 +4,15 @@ ExploreTracks is a fully responsive interactive global map platform for wildlife
 
 Live Demo: [explore-tracks.vercel.app](https://explore-tracks.vercel.app)
 
+<p align="center">
+  <img src="docs/ExploreTracks_map.png" alt="ExploreTracks Desktop Map" width="800"/>
+</p>
+<p align="center">
+  <img src="docs/ExploreTracks_mobile1.png" alt="ExploreTracks Mobile 1" width="300"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/ExploreTracks_mobile2.png" alt="ExploreTracks Mobile 2" width="300"/>
+</p>
+
 ---
 
 ## Features
