@@ -40,7 +40,9 @@ export default function RootLayout({
       <body className="h-full bg-neutral-950 text-neutral-100 antialiased overflow-hidden">
         {children}
       </body>
-      <GoogleAnalytics gaId="G-7XNBRNRBC6" />
+      {(process.env.NEXT_PUBLIC_GA_ID || process.env.GA_ID) && (
+        <GoogleAnalytics gaId={(process.env.NEXT_PUBLIC_GA_ID || process.env.GA_ID) as string} />
+      )}
     </html>
   );
 }
