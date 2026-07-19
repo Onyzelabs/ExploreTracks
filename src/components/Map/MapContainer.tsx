@@ -59,6 +59,43 @@ const ESRI_SATELLITE_STYLE = {
   ],
 };
 
+const ESRI_OCEAN_STYLE = {
+  version: 8,
+  sources: {
+    esri_ocean: {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "&copy; Esri, GEBCO, NOAA, National Geographic, DeLorme, HERE, Geonames.org",
+    },
+    esri_ocean_reference: {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+    },
+  },
+  layers: [
+    {
+      id: "ocean_base",
+      type: "raster",
+      source: "esri_ocean",
+      minzoom: 0,
+      maxzoom: 13,
+    },
+    {
+      id: "ocean_reference",
+      type: "raster",
+      source: "esri_ocean_reference",
+      minzoom: 0,
+      maxzoom: 13,
+    }
+  ],
+};
+
 // ─── Marker builders ──────────────────────────────────────────────────────────
 
 function buildCameraMarker(
@@ -243,7 +280,11 @@ export default function MapContainer({
     const map = new maplibregl.Map({
       container: containerRef.current,
       style:
-        mapStyle === "satellite" ? (ESRI_SATELLITE_STYLE as any) : mapStyle,
+        mapStyle === "satellite"
+          ? (ESRI_SATELLITE_STYLE as any)
+          : mapStyle === "ocean"
+          ? (ESRI_OCEAN_STYLE as any)
+          : mapStyle,
       center: [20, 15],
       zoom: 2.1,
       pitch: 0,

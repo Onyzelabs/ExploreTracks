@@ -279,6 +279,7 @@ export default function Home() {
               <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
               <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
               <option value="satellite">Satellite</option>
+              <option value="ocean">Ocean Map</option>
             </select>
 
             {/* Weather overlay toggle — hidden on mobile */}
@@ -357,6 +358,7 @@ export default function Home() {
                 <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
                 <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Light Map</option>
                 <option value="satellite">Satellite</option>
+                <option value="ocean">Ocean Map</option>
               </select>
               
               <select
