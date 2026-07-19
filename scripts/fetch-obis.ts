@@ -17,8 +17,15 @@ interface ObisRecord {
 
 const DEFAULT_SPECIES = [
   { scientific: "Chelonia mydas", common: "Green Sea Turtle", type: "reptile", color: "#10b981" },
+  { scientific: "Dermochelys coriacea", common: "Leatherback Turtle", type: "reptile", color: "#34d399" },
   { scientific: "Megaptera novaeangliae", common: "Humpback Whale", type: "mammal", color: "#0ea5e9" },
-  { scientific: "Carcharodon carcharias", common: "Great White Shark", type: "fish", color: "#3b82f6" },
+  { scientific: "Orcinus orca", common: "Orca (Killer Whale)", type: "mammal", color: "#f8fafc" },
+  { scientific: "Physeter macrocephalus", common: "Sperm Whale", type: "mammal", color: "#60a5fa" },
+  { scientific: "Tursiops truncatus", common: "Bottlenose Dolphin", type: "mammal", color: "#38bdf8" },
+  { scientific: "Carcharodon carcharias", common: "Great White Shark", type: "fish", color: "#94a3b8" },
+  { scientific: "Rhincodon typus", common: "Whale Shark", type: "fish", color: "#64748b" },
+  { scientific: "Mobula birostris", common: "Giant Manta Ray", type: "fish", color: "#818cf8" },
+  { scientific: "Aptenodytes forsteri", common: "Emperor Penguin", type: "bird", color: "#fef08a" },
 ];
 
 async function fetchObisRecords(scientificName: string): Promise<ObisRecord[]> {

@@ -308,6 +308,12 @@ export default function Home() {
             >
               Movebank
             </a>
+            <a href="https://obis.org" target="_blank" rel="noopener noreferrer" id="nav-obis-link"
+              className="hidden sm:inline-flex text-sm px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors font-medium"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              OBIS
+            </a>
 
             {/* Mobile hamburger */}
             <button
@@ -380,6 +386,9 @@ export default function Home() {
               <a href="https://www.movebank.org" target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center text-sm py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"
               >Movebank</a>
+              <a href="https://obis.org" target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center text-sm py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+              >OBIS</a>
             </div>
           </div>
         )}
