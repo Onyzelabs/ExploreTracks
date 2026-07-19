@@ -10,7 +10,6 @@ import { useCameraNotifications } from "@/lib/useNotifications";
 import AnimalInfo from "@/components/Sidebar/AnimalInfo";
 import TrackComparePanel from "@/components/Sidebar/TrackComparePanel";
 import FilterPanel from "@/components/Filter/FilterPanel";
-import AnimalListPanel from "@/components/Animal/AnimalListPanel";
 import Link from "next/link";
 import {
   Camera, PawPrint, Play,
@@ -81,8 +80,6 @@ export default function Home() {
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   // Weather overlay layer
   const [weatherLayer, setWeatherLayer] = useState<"clouds_new" | "precipitation_new" | "wind_new" | "terminator" | null>(null);
-  
-  const [isAnimalListOpen, setIsAnimalListOpen] = useState(false);
 
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
   const { subscribe, unsubscribe, isSubscribed } = useCameraNotifications();
@@ -240,13 +237,13 @@ export default function Home() {
               <Camera size={15} className="text-orange-400" />
               <span><CountBadge count={cameras?.length} isLoading={camLoading} error={camError} /> cams</span>
             </Link>
-            <button
-              onClick={() => setIsAnimalListOpen(true)}
+            <Link
+              href="/tracks"
               className="flex items-center gap-1.5 bg-[var(--color-surface-800)] px-3 py-1.5 rounded-md border border-[var(--glass-border)] hover:bg-[var(--color-surface-700)] transition-colors"
             >
               <PawPrint size={15} className="text-cyan-400" />
               <span><CountBadge count={tracks?.length} isLoading={trackLoading} error={trackError} /> tracks</span>
-            </button>
+            </Link>
             {openVideos.length > 0 && (
               <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-md border border-orange-500/20">
                 <Play size={13} className="text-orange-400" />
@@ -463,17 +460,6 @@ export default function Home() {
           </aside>
         )}
       </main>
-
-      {isAnimalListOpen && (
-        <AnimalListPanel
-          tracks={tracks ?? []}
-          onSelect={(track) => {
-            setSidebarContent({ type: "animal", track });
-            setIsAnimalListOpen(false);
-          }}
-          onClose={() => setIsAnimalListOpen(false)}
-        />
-      )}
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-3 opacity-50">
