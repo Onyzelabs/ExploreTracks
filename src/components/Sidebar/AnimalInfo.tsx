@@ -314,7 +314,7 @@ export default function AnimalInfo({ track, onClose, onPlaybackIndex, onCompare 
         {track.id.startsWith("obis-") ? (
           <a
             id={`obis-link-${track.id}`}
-            href={`https://obis.org/advancedsearch?scientificname=${encodeURIComponent(track.species)}`}
+            href={`https://mapper.obis.org/?taxon_name=${encodeURIComponent(track.species)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 w-full flex justify-center items-center gap-1.5 py-2 text-xs font-semibold text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
